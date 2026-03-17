@@ -1,0 +1,12 @@
+{
+  "short_name": "교독",
+  "name": "교독 — 함께 읽는 교환 독서",
+  "icons": [
+    { "src": "logo192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "logo512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#ccd5ae",
+  "background_color": "#fefae0"
+}

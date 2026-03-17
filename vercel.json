@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/aladin-api/:path*",
+      "destination": "https://www.aladin.co.kr/ttb/api/:path*"
+    }
+  ]
+}
