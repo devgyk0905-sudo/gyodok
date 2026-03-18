@@ -183,7 +183,6 @@ export default function GyodokDetailPage() {
             </div>
           </div>
 
-          {/* 우측 버튼 — 관리자만: 교독관리 */}
           {isAdmin && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
               <button
@@ -208,12 +207,16 @@ export default function GyodokDetailPage() {
         {sortedParticipants.length === 0 && <EmptyState message="참여자가 없습니다" />}
 
         {sortedParticipants.map((pid, pidIdx) => {
-          const isMe       = pid === user?.id;
-          const isLast     = pidIdx === sortedParticipants.length - 1;
-          const memberName = userMap[pid]?.name || pid;
-          const memberData = userMap[pid];
-          const profileSize   = isMe ? 48 : 36;
-          const nameFontSize  = isMe ? 10 : 9;
+          const isMe        = pid === user?.id;
+          const isLast      = pidIdx === sortedParticipants.length - 1;
+          const memberName  = userMap[pid]?.name || pid;
+          const memberData  = userMap[pid];
+          const profileSize  = isMe ? 48 : 36;
+          const nameFontSize = isMe ? 10 : 9;
+
+          // 책 카드 크기: 내 행은 크게
+          const bookW = isMe ? 52 : 44;
+          const bookH = isMe ? 70 : 60;
 
           // 개인별 현재 차수
           const personalRound = getPersonalCurrentRound(pid, books, allStatuses, totalRounds);
@@ -264,7 +267,7 @@ export default function GyodokDetailPage() {
                 </div>
 
                 {/* 책 목록 */}
-                <div style={{ display: 'flex', gap: 10, flex: 1, alignItems: 'flex-start', paddingTop: isMe ? 6 : 0 }}>
+                <div style={{ display: 'flex', gap: 10, flex: 1, alignItems: 'flex-start', paddingTop: isMe ? 4 : 0 }}>
                   {myBooks.map((book, i) => {
                     const round = i + 1;
                     const state = getBookCardState(round, personalRound);
@@ -283,7 +286,7 @@ export default function GyodokDetailPage() {
                         >
                           {canSearch ? (
                             <div style={{
-                              width: 44, height: 60, borderRadius: 6,
+                              width: bookW, height: bookH, borderRadius: 6,
                               border: '1.5px dashed var(--accent-primary)',
                               background: 'var(--bg-surface-secondary)',
                               display: 'flex', flexDirection: 'column',
@@ -296,7 +299,7 @@ export default function GyodokDetailPage() {
                             </div>
                           ) : canSelect ? (
                             <div style={{
-                              width: 44, height: 60, borderRadius: 6,
+                              width: bookW, height: bookH, borderRadius: 6,
                               border: '1.5px dashed var(--border-input)',
                               background: 'var(--bg-surface-secondary)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -309,8 +312,8 @@ export default function GyodokDetailPage() {
                             <BookCover
                               coverUrl={book?.coverUrl}
                               state={state}
-                              width={44}
-                              height={60}
+                              width={bookW}
+                              height={bookH}
                               onClick={book ? () => setSelectedBook({ ...book, _ownerIs: pid, _status: allStatuses[book.id]?.[pid] }) : undefined}
                             />
                           )}
