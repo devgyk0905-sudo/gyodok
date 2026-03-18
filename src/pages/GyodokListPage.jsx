@@ -52,6 +52,18 @@ export default function GyodokListPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
+  // 탭 포커스 복귀 시 초대 알림 재로드
+useEffect(() => {
+  if (!user) return;
+  const handleVisibility = () => {
+    if (document.visibilityState === 'visible') {
+      getPendingInvites(user.id).then(setPendingInvites);
+    }
+  };
+  document.addEventListener('visibilitychange', handleVisibility);
+  return () => document.removeEventListener('visibilitychange', handleVisibility);
+}, [user]);
+
   const handleFavorite = async (e, gyodokId) => {
     e.stopPropagation();
     const isFav = favIds.includes(gyodokId);

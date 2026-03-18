@@ -86,6 +86,18 @@ export default function HomePage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+// 탭 포커스 복귀 시 초대 알림 재로드
+useEffect(() => {
+  if (!user) return;
+  const handleVisibility = () => {
+    if (document.visibilityState === 'visible') {
+      getPendingInvites(user.id).then(setPendingInvites);
+    }
+  };
+  document.addEventListener('visibilitychange', handleVisibility);
+  return () => document.removeEventListener('visibilitychange', handleVisibility);
+}, [user]);
+
   const handleStatusChange = async (gyodokId, field) => {
     if (!user) return;
     const g   = favGyodoks.find(g => g.id === gyodokId);

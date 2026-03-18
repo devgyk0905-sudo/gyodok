@@ -386,6 +386,23 @@ export const subscribeToBookStatuses = (gyodokId, callback) => {
   return () => supabase.removeChannel(channel);
 };
 
+// pending_ids 변경 실시간 구독
+export const subscribeToPendingInvites = (userId, callback) => {
+  const channel = supabase
+    .channel(`pending_invites:${userId}`)
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'gyodoks',
+    }, async () => {
+      // gyodoks 테이블 UPDATE 시 내 pending 목록 다시 조회
+      const invites = await getPendingInvites(userId);
+      callback(invites);
+    })
+    .subscribe();
+  return () => supabase.removeChannel(channel);
+};
+
 // ===== Storage (프로필 사진) =====
 
 export const uploadProfileImage = async (userId, file) => {
