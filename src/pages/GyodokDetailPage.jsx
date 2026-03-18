@@ -78,13 +78,18 @@ export default function GyodokDetailPage() {
   };
 
   const doAddBook = async (bookData, round) => {
-    try {
-      await addBook(id, {
-        ownerId: user.id,
-        round,
-        exchangeOrder: [user.id],
-        ...bookData,
-      });
+  try {
+    const payload = {
+      ...bookData,
+      ownerId: user.id,
+      round,
+      exchangeOrder: [user.id],
+      id: undefined,
+      gyodokId: undefined,
+    };
+    console.log('addBook payload:', payload);  // ← 추가
+    await addBook(id, payload);
+    
       // 위시리스트에 있으면 조용히 자동 삭제
       if (bookData.isbn) {
         await removeFromWishlistByIsbn(user.id, bookData.isbn);
