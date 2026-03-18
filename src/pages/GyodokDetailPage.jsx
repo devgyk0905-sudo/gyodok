@@ -264,15 +264,28 @@ export default function GyodokDetailPage() {
                           }
                           style={{ cursor: (canSearch || canSelect) ? 'pointer' : 'default' }}
                         >
-                          {(canSearch || canSelect) ? (
+                          {canSearch ? (
                             <div style={{
                               width: 44, height: 60, borderRadius: 6,
                               border: '1.5px dashed var(--accent-primary)',
                               background: 'var(--bg-surface-secondary)',
+                              display: 'flex', flexDirection: 'column',
+                              alignItems: 'center', justifyContent: 'center', gap: 3,
+                            }}>
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M7 2v10M2 7h10" stroke="var(--accent-primary)" strokeWidth="1.5" strokeLinecap="round"/>
+                              </svg>
+                              <span style={{ fontSize: 7, color: 'var(--accent-primary)', fontWeight: 500, textAlign: 'center', lineHeight: 1.3 }}>책{'\n'}추가</span>
+                            </div>
+                          ) : canSelect ? (
+                            <div style={{
+                              width: 44, height: 60, borderRadius: 6,
+                              border: '1.5px dashed var(--border-input)',
+                              background: 'var(--bg-surface-secondary)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                             }}>
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M8 3v10M3 8h10" stroke="var(--accent-primary)" strokeWidth="1.5" strokeLinecap="round"/>
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M7 2v10M2 7h10" stroke="var(--border-strong)" strokeWidth="1.5" strokeLinecap="round"/>
                               </svg>
                             </div>
                           ) : (

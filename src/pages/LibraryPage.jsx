@@ -407,8 +407,6 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
               ))
             )}
           </div>
-
-          </div>
         </div>
       </div>
 
