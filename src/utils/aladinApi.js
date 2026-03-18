@@ -72,6 +72,5 @@ function normalizeBook(item) {
     coverUrl:    item.cover || '',
     description: item.description || '',
     price:       item.priceSales || item.priceStandard || 0,
-    link:        item.link || '',
   };
 }
