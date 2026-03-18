@@ -117,7 +117,7 @@ export const getBookStatus = async (gyodokId, bookId, userId) => {
     .select('*')
     .eq('book_id', bookId)
     .eq('user_id', userId)
-    .maybesingle();
+    .maybeSingle();
   return data
     ? { isRead: data.is_read, isSent: data.is_sent, isArrived: data.is_arrived }
     : { isRead: false, isSent: false, isArrived: false };

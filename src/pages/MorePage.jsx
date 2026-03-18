@@ -92,25 +92,25 @@ export default function MorePage() {
           <Divider />
           <div style={{ padding: '5px 0' }}>
   <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 3 }}>배송 주소</div>
-  {user?.address ? (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {user?.zipCode && (
-        <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
-          [{user.zipCode}]
-        </div>
-      )}
-      <div style={{ fontSize: 12, color: 'var(--text-primary)' }}>
-        {user.address},
+{user?.address ? (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    {(user?.zipCode || user?.zip_code) && (
+      <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+        [{user.zipCode || user.zip_code}]
       </div>
-      {user?.addressDetail && (
-        <div style={{ fontSize: 12, color: 'var(--text-primary)' }}>
-          {user.addressDetail}
-        </div>
-      )}
+    )}
+    <div style={{ fontSize: 12, color: 'var(--text-primary)' }}>
+      {user.address}{user.addressDetail ? ',' : ''}
     </div>
-  ) : (
-    <div style={{ fontSize: 12, color: 'var(--text-hint)' }}>미등록</div>
-  )}
+    {user?.addressDetail && (
+      <div style={{ fontSize: 12, color: 'var(--text-primary)' }}>
+        {user.addressDetail}
+      </div>
+    )}
+  </div>
+) : (
+  <div style={{ fontSize: 12, color: 'var(--text-hint)' }}>미등록</div>
+)}
 </div>
           {user?.deliveryMemo && (
             <>
