@@ -9,7 +9,7 @@ import {
 } from '../components/common';
 import {
   getGyodok, getBooks, getBookStatus, updateBookStatus,
-  addFeedItem, getAllUsers, addBook, addToWishlist,
+  addFeedItem, getAllUsers, addBook, addToWishlist, deleteBook,
 } from '../supabase/db';
 import { searchBooks } from '../utils/aladinApi';
 import { getBookCardState, calcGyodokStatus } from '../utils/statusCalc';
@@ -26,6 +26,8 @@ export default function GyodokDetailPage() {
   const [selectedBook,   setSelectedBook]   = useState(null);
   const [userMap,        setUserMap]        = useState({});
   const [showBookSearch, setShowBookSearch] = useState(false);
+
+  const isAdmin = user?.isAdmin || user?.is_admin;
 
   const load = useCallback(async () => {
     try {
@@ -71,11 +73,20 @@ export default function GyodokDetailPage() {
       await addBook(id, {
         ownerId: user.id,
         round: 1,
-        exchangeOrder: gyodok.participantIds || [],
+        exchangeOrder: [user.id],
         ...bookData,
       });
       await load();
       setShowBookSearch(false);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleDeleteBook = async (bookId) => {
+    if (!window.confirm('이 책을 삭제하시겠습니까?')) return;
+    try {
+      await deleteBook(bookId);
+      setSelectedBook(null);
+      await load();
     } catch (e) { console.error(e); }
   };
 
@@ -86,7 +97,6 @@ export default function GyodokDetailPage() {
     <div className="page"><TopBar title="교독 상세" showBack /><EmptyState message="교독 정보를 불러올 수 없습니다" /><BottomNav /></div>
   );
 
-  const isAdmin     = user?.isAdmin || user?.is_admin;
   const canEdit     = isAdmin || gyodok.editableIds?.includes(user?.id);
   const totalRounds = gyodok.participantIds?.length || 3;
 
@@ -213,7 +223,6 @@ export default function GyodokDetailPage() {
 
       <BottomNav />
 
-      {/* 책 풀 시트 */}
       {selectedBook && (
         <BookFullSheet
           book={selectedBook}
@@ -221,13 +230,14 @@ export default function GyodokDetailPage() {
           ownerUserId={selectedBook._ownerIs}
           currentUserId={user?.id}
           ownerName={userMap[selectedBook._ownerIs]?.name || selectedBook._ownerIs}
+          isAdmin={isAdmin}
           onClose={() => setSelectedBook(null)}
           onStatusChange={(field) => handleStatusChange(selectedBook, field)}
+          onDeleteBook={() => handleDeleteBook(selectedBook.id)}
           userMap={userMap}
         />
       )}
 
-      {/* 도서 검색 시트 */}
       {showBookSearch && (
         <BookSearchSheet
           onClose={() => setShowBookSearch(false)}
@@ -239,7 +249,6 @@ export default function GyodokDetailPage() {
   );
 }
 
-/* ── CollageImage ── */
 function CollageImage({ books }) {
   const covers = books.slice(0, 3);
   const colors = ['var(--accent-green)', 'var(--accent-amber)', 'var(--color-beige)'];
@@ -259,7 +268,6 @@ function CollageImage({ books }) {
   );
 }
 
-/* ── BookStatusBadge ── */
 function BookStatusBadge({ round, currentRound, status }) {
   if (round < currentRound) return <Pill variant="gray" style={{ fontSize: 8, padding: '1px 5px' }}>완료</Pill>;
   if (round > currentRound) return <span style={{ fontSize: 8, color: 'var(--text-hint)' }}>예정</span>;
@@ -270,9 +278,10 @@ function BookStatusBadge({ round, currentRound, status }) {
   return <Pill variant="amber" style={{ fontSize: 8, padding: '1px 5px' }}>읽는 중</Pill>;
 }
 
-/* ── BookFullSheet ── */
-function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, onClose, onStatusChange, userMap }) {
-  const isMyBook = ownerUserId === currentUserId;
+function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, isAdmin, onClose, onStatusChange, onDeleteBook, userMap }) {
+  const isMyBook   = ownerUserId === currentUserId;
+  const canDelete  = isMyBook || isAdmin;
+
   return (
     <div
       style={{
@@ -301,6 +310,7 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, on
             </svg>
           </button>
         </div>
+
         <div style={{ flex: 1, overflowY: 'auto', padding: '13px 14px 20px' }}>
           {/* 도서 정보 */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'flex-start' }}>
@@ -361,6 +371,7 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, on
               </div>
             </>
           )}
+
           <Divider />
 
           {/* 책 주인 */}
@@ -404,9 +415,27 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, on
           {book.description && (
             <>
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 5 }}>책 소개</div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
                 {book.description.length > 150 ? book.description.slice(0, 150) + '...' : book.description}
               </div>
+            </>
+          )}
+
+          {/* 책 삭제 버튼 */}
+          {canDelete && (
+            <>
+              <Divider />
+              <button
+                onClick={onDeleteBook}
+                style={{
+                  width: '100%', height: 40, borderRadius: 'var(--radius-md)',
+                  background: 'transparent', border: '0.5px solid #c87070',
+                  fontSize: 13, color: '#c87070',
+                  cursor: 'pointer', fontFamily: 'var(--font-sans)', marginTop: 8,
+                }}
+              >
+                {isAdmin && !isMyBook ? '책 삭제하기 (관리자)' : '책 삭제하기'}
+              </button>
             </>
           )}
         </div>
@@ -415,7 +444,6 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, on
   );
 }
 
-/* ── BookSearchSheet ── */
 function BookSearchSheet({ onClose, onAddBook, onAddWish }) {
   const [query,   setQuery]   = useState('');
   const [results, setResults] = useState([]);
@@ -473,14 +501,11 @@ function BookSearchSheet({ onClose, onAddBook, onAddWish }) {
                 fontSize: 13, color: 'var(--text-primary)',
               }}
             />
-            <button
-              onClick={handleSearch}
-              style={{
-                width: 38, height: 38, borderRadius: 'var(--radius-sm)',
-                background: 'var(--accent-primary)', border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              }}
-            >
+            <button onClick={handleSearch} style={{
+              width: 38, height: 38, borderRadius: 'var(--radius-sm)',
+              background: 'var(--accent-primary)', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}>
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <circle cx="6.5" cy="6.5" r="4" stroke="#fff" strokeWidth="1.3"/>
                 <path d="M10 10l2.5 2.5" stroke="#fff" strokeWidth="1.3" strokeLinecap="round"/>
@@ -522,30 +547,18 @@ function BookSearchSheet({ onClose, onAddBook, onAddWish }) {
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: 5, marginTop: 7 }}>
-                  <button
-                    onClick={() => onAddBook(book)}
-                    style={{
-                      flex: 1, height: 28, borderRadius: 7,
-                      background: 'var(--accent-green)',
-                      border: '0.5px solid var(--border-default)',
-                      fontSize: 10, color: 'var(--accent-green-dark)',
-                      cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                    }}
-                  >
-                    교독에 추가
-                  </button>
-                  <button
-                    onClick={() => onAddWish(book)}
-                    style={{
-                      flex: 1, height: 28, borderRadius: 7,
-                      background: 'var(--bg-surface-secondary)',
-                      border: '0.5px solid var(--border-input)',
-                      fontSize: 10, color: 'var(--text-secondary)',
-                      cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                    }}
-                  >
-                    위시에 추가
-                  </button>
+                  <button onClick={() => onAddBook(book)} style={{
+                    flex: 1, height: 28, borderRadius: 7,
+                    background: 'var(--accent-green)', border: '0.5px solid var(--border-default)',
+                    fontSize: 10, color: 'var(--accent-green-dark)',
+                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                  }}>교독에 추가</button>
+                  <button onClick={() => onAddWish(book)} style={{
+                    flex: 1, height: 28, borderRadius: 7,
+                    background: 'var(--bg-surface-secondary)', border: '0.5px solid var(--border-input)',
+                    fontSize: 10, color: 'var(--text-secondary)',
+                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                  }}>위시에 추가</button>
                 </div>
               </div>
             </div>

@@ -66,20 +66,6 @@ export const updateGyodok = async (gyodokId, fields) => {
   if (error) throw error;
 };
 
-export const deleteGyodok = async (gyodokId) => {
-  const { data: books } = await supabase
-    .from('books').select('isbn').eq('gyodok_id', gyodokId);
-  if (books?.length) {
-    const isbns = books.map(b => b.isbn).filter(Boolean);
-    if (isbns.length) {
-      await supabase.from('wishlist').delete().in('isbn', isbns);
-    }
-  }
-  const { error } = await supabase
-    .from('gyodoks').delete().eq('id', gyodokId);
-  if (error) throw error;
-};
-
 // ===== 책 =====
 
 export const getBooks = async (gyodokId) => {
@@ -91,24 +77,16 @@ export const getBooks = async (gyodokId) => {
 };
 
 export const addBook = async (gyodokId, fields) => {
-  const payload = {
-    gyodok_id:      gyodokId,
-    owner_id:       fields.ownerId,
-    round:          fields.round || 1,
-    exchange_order: fields.exchangeOrder || [],
-    isbn:           fields.isbn || '',
-    title:          fields.title || '',
-    author:         fields.author || '',
-    publisher:      fields.publisher || '',
-    publish_date:   fields.publishDate || '',
-    cover_url:      fields.coverUrl || '',
-    description:    fields.description || '',
-    price:          fields.price || 0,
-  };
   const { data, error } = await supabase
-    .from('books').insert(payload).select().single();
+    .from('books').insert({ ...snakeCase(fields), gyodok_id: gyodokId }).select().single();
   if (error) throw error;
   return camelCase(data);
+};
+
+export const deleteBook = async (bookId) => {
+  const { error } = await supabase
+    .from('books').delete().eq('id', bookId);
+  if (error) throw error;
 };
 
 export const updateBook = async (bookId, fields) => {
