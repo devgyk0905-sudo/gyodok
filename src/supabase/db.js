@@ -89,6 +89,20 @@ export const deleteBook = async (bookId) => {
   if (error) throw error;
 };
 
+export const deleteGyodok = async (gyodokId) => {
+  const { data: books } = await supabase
+    .from('books').select('isbn').eq('gyodok_id', gyodokId);
+  if (books?.length) {
+    const isbns = books.map(b => b.isbn).filter(Boolean);
+    if (isbns.length) {
+      await supabase.from('wishlist').delete().in('isbn', isbns);
+    }
+  }
+  const { error } = await supabase
+    .from('gyodoks').delete().eq('id', gyodokId);
+  if (error) throw error;
+};
+
 export const updateBook = async (bookId, fields) => {
   const { error } = await supabase
     .from('books').update(snakeCase(fields)).eq('id', bookId);
