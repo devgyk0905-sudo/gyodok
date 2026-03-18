@@ -158,35 +158,19 @@ export default function GyodokDetailPage() {
             <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 3 }}>
               {formatDate(gyodok.startDate)}{gyodok.endDate ? ` ~ ${formatDate(gyodok.endDate)}` : ''}
             </div>
-            {/* 참여자 아바타 + 일반 계정 책 등록 버튼 */}
-            <div style={{ display: 'flex', alignItems: 'center', marginTop: 6, gap: 8 }}>
-              <div style={{ display: 'flex' }}>
-                {(gyodok.participantIds || []).slice(0, 4).map((pid, i) => (
-                  <div key={pid} style={{
-                    width: 20, height: 20, borderRadius: '50%',
-                    background: ['var(--accent-green)', 'var(--accent-amber)', 'var(--accent-primary)', 'var(--color-beige)'][i % 4],
-                    border: '1.5px solid var(--bg-page)', marginLeft: i > 0 ? -6 : 0,
-                  }} />
-                ))}
-              </div>
-              {!isAdmin && canEdit && (
-                <button
-                  onClick={() => setShowBookSearch(true)}
-                  style={{
-                    padding: '3px 8px', borderRadius: 8,
-                    background: 'var(--bg-surface-secondary)',
-                    border: '0.5px solid var(--border-input)',
-                    fontSize: 10, color: 'var(--text-secondary)',
-                    cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
-                  }}
-                >
-                  + 책 등록
-                </button>
-              )}
+            {/* 참여자 아바타 */}
+            <div style={{ display: 'flex', marginTop: 6 }}>
+              {(gyodok.participantIds || []).slice(0, 4).map((pid, i) => (
+                <div key={pid} style={{
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: ['var(--accent-green)', 'var(--accent-amber)', 'var(--accent-primary)', 'var(--color-beige)'][i % 4],
+                  border: '1.5px solid var(--bg-page)', marginLeft: i > 0 ? -6 : 0,
+                }} />
+              ))}
             </div>
           </div>
 
-          {/* 관리자 버튼 */}
+          {/* 우측 버튼 — 관리자만: 교독관리 */}
           {isAdmin && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
               <button
@@ -200,18 +184,6 @@ export default function GyodokDetailPage() {
                 }}
               >
                 교독 관리
-              </button>
-              <button
-                onClick={() => setShowBookSearch(true)}
-                style={{
-                  padding: '5px 10px', borderRadius: 8,
-                  background: 'var(--bg-surface-secondary)',
-                  border: '0.5px solid var(--border-input)',
-                  fontSize: 11, color: 'var(--text-secondary)',
-                  cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
-                }}
-              >
-                + 책 등록
               </button>
             </div>
           )}
@@ -281,13 +253,18 @@ export default function GyodokDetailPage() {
                     const state = getBookCardState(round, gyodokStatus.round);
                     const st    = book ? allStatuses[book.id]?.[pid] : null;
                     const canSelect = isMe && !book && round > 1;
+                    const canSearch = isMe && !book && round === 1; // 1차 빈칸 클릭 → 검색
                     return (
                       <div key={round} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                         <div
-                          onClick={canSelect ? () => setShowBookSelect(round) : undefined}
-                          style={{ cursor: canSelect ? 'pointer' : 'default' }}
+                          onClick={
+                            canSearch ? () => setShowBookSearch(true)
+                            : canSelect ? () => setShowBookSelect(round)
+                            : undefined
+                          }
+                          style={{ cursor: (canSearch || canSelect) ? 'pointer' : 'default' }}
                         >
-                          {canSelect ? (
+                          {(canSearch || canSelect) ? (
                             <div style={{
                               width: 44, height: 60, borderRadius: 6,
                               border: '1.5px dashed var(--accent-primary)',

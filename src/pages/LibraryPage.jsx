@@ -352,9 +352,34 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
             </div>
           </div>
 
-          <Divider />
+          {/* 교독에 추가 + 삭제 버튼 */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <button
+              onClick={() => setShowGyodokPicker(true)}
+              style={{
+                flex: 2, height: 42, borderRadius: 'var(--radius-md)',
+                background: 'var(--accent-green)',
+                border: '0.5px solid var(--border-default)',
+                fontSize: 13, color: 'var(--accent-green-dark)', fontWeight: 500,
+                cursor: 'pointer', fontFamily: 'var(--font-sans)',
+              }}
+            >
+              + 교독에 추가
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              style={{
+                flex: 1, height: 42, borderRadius: 'var(--radius-md)',
+                background: 'transparent', border: '0.5px solid #c87070',
+                fontSize: 13, color: '#c87070',
+                cursor: 'pointer', fontFamily: 'var(--font-sans)',
+              }}
+            >
+              삭제
+            </button>
+          </div>
 
-          {/* 교독 기록 */}
+          <Divider />
           <div style={{ padding: '14px 0' }}>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 500, marginBottom: 10 }}>
               교독 기록 {gyodokRecords.length}회
@@ -383,36 +408,7 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
             )}
           </div>
 
-          <Divider />
-
-          {/* 교독에 추가 버튼 */}
-          <div style={{ padding: '14px 0' }}>
-            <button
-              onClick={() => setShowGyodokPicker(true)}
-              style={{
-                width: '100%', height: 42, borderRadius: 'var(--radius-md)',
-                background: 'var(--accent-green)',
-                border: '0.5px solid var(--border-default)',
-                fontSize: 13, color: 'var(--accent-green-dark)', fontWeight: 500,
-                cursor: 'pointer', fontFamily: 'var(--font-sans)',
-              }}
-            >
-              + 교독에 추가하기
-            </button>
           </div>
-
-          {/* 삭제 버튼 */}
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            style={{
-              width: '100%', height: 40, borderRadius: 'var(--radius-md)',
-              background: 'transparent', border: '0.5px solid #c87070',
-              fontSize: 13, color: '#c87070',
-              cursor: 'pointer', fontFamily: 'var(--font-sans)',
-            }}
-          >
-            서재에서 삭제
-          </button>
         </div>
       </div>
 
