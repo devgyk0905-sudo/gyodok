@@ -89,7 +89,7 @@ export default function GyodokDetailPage() {
     };
     console.log('addBook payload:', payload);  // ← 추가
     await addBook(id, payload);
-    
+
       // 위시리스트에 있으면 조용히 자동 삭제
       if (bookData.isbn) {
         await removeFromWishlistByIsbn(user.id, bookData.isbn);
@@ -97,7 +97,6 @@ export default function GyodokDetailPage() {
       await load();
       setShowBookSelect(null);
       setShowBookSearch(false);
-      setWishConfirm(null);
       showToast(`${round}차 책을 등록했습니다`, 'success');
     } catch (e) { console.error(e); }
   };
