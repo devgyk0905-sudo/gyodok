@@ -10,27 +10,28 @@ import {
 } from '../components/common';
 import {
   getGyodoks, getBooks, getBookStatus, updateBookStatus,
-  getWishlist, getFeed, addFeedItem, getAllUsers, getFavorites,
+  getWishlist, addFeedItem, getAllUsers, getFavorites,
   getPendingInvites,
 } from '../supabase/db';
 import {
   calcGyodokStatus, getMyStatusText, getMemberStatus,
   getBookCardState, calcDday, getNextCheckpoint,
+  getPersonalCurrentRound,
 } from '../utils/statusCalc';
 
 export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [favGyodoks,        setFavGyodoks]        = useState([]);
-  const [favBooks,          setFavBooks]          = useState({});
-  const [favStatuses,       setFavStatuses]        = useState({});
-  const [userMap,           setUserMap]           = useState({});
-  const [wishlist,          setWishlist]          = useState([]);
-  const [pendingInvites,    setPendingInvites]    = useState([]);
-  const [showNotification,  setShowNotification]  = useState(false);
-  const [loading,           setLoading]           = useState(true);
-  const [showProfileAlert,  setShowProfileAlert]  = useState(false);
+  const [favGyodoks,       setFavGyodoks]       = useState([]);
+  const [favBooks,         setFavBooks]         = useState({});
+  const [favStatuses,      setFavStatuses]      = useState({});
+  const [userMap,          setUserMap]          = useState({});
+  const [wishlist,         setWishlist]         = useState([]);
+  const [pendingInvites,   setPendingInvites]   = useState([]);
+  const [showNotification, setShowNotification] = useState(false);
+  const [loading,          setLoading]          = useState(true);
+  const [showProfileAlert, setShowProfileAlert] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -44,13 +45,9 @@ export default function HomePage() {
     if (!user) return;
     try {
       const [gyodoks, users, favs, wl, invites] = await Promise.all([
-        getGyodoks(user.id),
-        getAllUsers(),
-        getFavorites(user.id),
-        getWishlist(user.id),
-        getPendingInvites(user.id),
+        getGyodoks(user.id), getAllUsers(), getFavorites(user.id),
+        getWishlist(user.id), getPendingInvites(user.id),
       ]);
-
       const map = {};
       users.forEach(u => { map[u.id] = u; });
       setUserMap(map);
@@ -79,42 +76,43 @@ export default function HomePage() {
       }
       setFavBooks(booksMap);
       setFavStatuses(statusesMap);
-
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, [user]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
-// 탭 포커스 복귀 시 초대 알림 재로드
-useEffect(() => {
-  if (!user) return;
-  const handleVisibility = () => {
-    if (document.visibilityState === 'visible') {
-      getPendingInvites(user.id).then(setPendingInvites);
-    }
-  };
-  document.addEventListener('visibilitychange', handleVisibility);
-  return () => document.removeEventListener('visibilitychange', handleVisibility);
-}, [user]);
+  useEffect(() => {
+    if (!user) return;
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        getPendingInvites(user.id).then(setPendingInvites);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [user]);
 
   const handleStatusChange = async (gyodokId, field) => {
     if (!user) return;
     const g   = favGyodoks.find(g => g.id === gyodokId);
     const bks = favBooks[gyodokId] || [];
     const sm  = favStatuses[gyodokId] || {};
+    const totalRounds = g?.participantIds?.length || 3;
 
-    const gs = calcGyodokStatus(
-      (g?.participantIds || []).map(id => ({ id })), bks, sm
-    );
+    const personalRound = getPersonalCurrentRound(user.id, bks, sm, totalRounds);
     const myCurrentBook = bks.find(
-      b => b.round === gs.round && b.exchangeOrder?.includes(user.id)
+      b => b.round === personalRound && b.exchangeOrder?.includes(user.id)
     );
     if (!myCurrentBook) return;
 
     const current = sm[myCurrentBook.id]?.[user.id] || {};
     const updated  = { ...current, [field]: !current[field] };
     if (field === 'isSent' && !updated.isSent) updated.isArrived = false;
+    if (field === 'isArrived' && !updated.isArrived) {
+      updated.isRead = false;
+      updated.isSent = false;
+    }
 
     await updateBookStatus(gyodokId, myCurrentBook.id, user.id, updated);
 
@@ -214,60 +212,53 @@ useEffect(() => {
           </div>
         )}
 
-        {/* 즐겨찾기 없을 때 */}
         {favGyodoks.length === 0 && (
           <div style={{
             background: 'var(--bg-surface-secondary)',
             borderRadius: 'var(--radius-lg)', padding: '14px',
             marginBottom: 10, textAlign: 'center',
           }}>
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4 }}>
-              즐겨찾기한 교독이 없습니다
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-hint)' }}>
-              교독 목록에서 ★ 버튼으로 최대 3개를 즐겨찾기하세요
-            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4 }}>즐겨찾기한 교독이 없습니다</div>
+            <div style={{ fontSize: 11, color: 'var(--text-hint)' }}>교독 목록에서 ★ 버튼으로 최대 3개를 즐겨찾기하세요</div>
           </div>
         )}
 
-        {/* 즐겨찾기 교독 세트 */}
         {favGyodoks.map(g => {
           const bks = favBooks[g.id] || [];
           const sm  = favStatuses[g.id] || {};
-          const gs  = calcGyodokStatus(
-            (g.participantIds || []).map(id => ({ id })), bks, sm
+          const totalRounds = g.participantIds?.length || 3;
+
+          const gs = calcGyodokStatus(
+            (g.participantIds || []).map(id => ({ id })), bks, sm, totalRounds
           );
           const cp = getNextCheckpoint(g.checkpoints);
           const dd = cp ? calcDday(cp.date) : null;
 
-          const myCurrentBook = bks.find(
-            b => b.round === gs.round && b.exchangeOrder?.includes(user.id)
-          );
-          const myStatus = myCurrentBook ? sm[myCurrentBook.id]?.[user.id] : null;
+          // 개인별 현재 차수 기준으로 내 책 찾기
+          const personalRound  = getPersonalCurrentRound(user.id, bks, sm, totalRounds);
+          const myCurrentBook  = bks.find(b => b.round === personalRound && b.exchangeOrder?.includes(user.id));
+          const myStatus       = myCurrentBook ? sm[myCurrentBook.id]?.[user.id] : null;
+          const isFirstRound   = personalRound === 1;
+          const isLastRound    = personalRound === totalRounds;
+          const isMidRound     = !isFirstRound && !isLastRound;
 
           return (
             <div key={g.id} style={{
-              marginBottom: 20,
-              background: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-lg)',
-              border: '0.5px solid var(--border-default)',
-              overflow: 'hidden',
-              boxShadow: 'var(--shadow-card)',
+              marginBottom: 20, background: 'var(--bg-surface)',
+              borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-default)',
+              overflow: 'hidden', boxShadow: 'var(--shadow-card)',
             }}>
               <div
                 onClick={() => navigate(`/gyodok/${g.id}`)}
                 style={{
                   background: 'linear-gradient(135deg, #ccd5ae 0%, #faedcd 60%, #fefae0 100%)',
-                  padding: '14px 16px',
-                  display: 'flex', justifyContent: 'space-between',
+                  padding: '14px 16px', display: 'flex', justifyContent: 'space-between',
                   alignItems: 'center', cursor: 'pointer',
                 }}
               >
                 <div>
                   <div style={{ fontSize: 10, color: '#5a6030', lineHeight: 1.8 }}>{g.title}</div>
-                  <div style={{ fontSize: 26, fontWeight: 500, color: '#3a4028', lineHeight: 1.1 }}>
-                    {dd || '—'}
-                  </div>
+                  <div style={{ fontSize: 26, fontWeight: 500, color: '#3a4028', lineHeight: 1.1 }}>{dd || '—'}</div>
                   {cp && (
                     <div style={{ fontSize: 10, color: '#5a6030', lineHeight: 1.8 }}>
                       ~ {cp.date}<br />
@@ -279,39 +270,61 @@ useEffect(() => {
                   <Pill variant={g.status === 'active' ? 'green' : g.status === 'upcoming' ? 'amber' : 'gray'}>
                     {g.status === 'active' ? '진행 중' : g.status === 'upcoming' ? '예정' : '종료'}
                   </Pill>
-                  <div style={{ fontSize: 10, color: '#3a4028', fontWeight: 500, marginTop: 2 }}>
-                    {gs.statusText}
-                  </div>
+                  <div style={{ fontSize: 10, color: '#3a4028', fontWeight: 500, marginTop: 2 }}>{gs.statusText}</div>
                 </div>
               </div>
 
+              {/* 내 상태 */}
               <div style={{ padding: '14px 16px', borderTop: '0.5px solid var(--border-default)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>내 상태</div>
                   <div style={{ fontSize: 11, color: 'var(--accent-primary)', fontWeight: 500 }}>
-                    {bks.length === 0 ? '책 등록 대기 중' : getMyStatusText(gs.round, myStatus)}
+                    {bks.length === 0 ? '책 등록 대기 중' : getMyStatusText(personalRound, myStatus)}
                   </div>
                 </div>
-                <MyBooksRow
-                  books={bks}
-                  currentRound={gs.round}
-                  userId={user.id}
-                  totalRounds={g.participantIds?.length || 3}
-                />
-                <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                  <StatusButton label="다 읽었어요!" active={!!myStatus?.isRead} onClick={() => handleStatusChange(g.id, 'isRead')} />
-                  <StatusButton label="발송했어요!" active={!!myStatus?.isSent} onClick={() => handleStatusChange(g.id, 'isSent')} />
-                </div>
-                <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                  <StatusButton label="도착했어요!" active={!!myStatus?.isArrived} disabled={!myStatus?.isSent} onClick={() => handleStatusChange(g.id, 'isArrived')} />
-                </div>
-                {!myStatus?.isSent && (
-                  <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 4 }}>
-                    발송 완료 후 활성화됩니다
+                <MyBooksRow books={bks} currentRound={personalRound} userId={user.id} totalRounds={totalRounds} />
+
+                {/* 1차: 읽기 + 발송 */}
+                {isFirstRound && (
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                    <StatusButton label="다 읽었어요!" active={!!myStatus?.isRead} onClick={() => handleStatusChange(g.id, 'isRead')} />
+                    <StatusButton label="발송했어요!" active={!!myStatus?.isSent} onClick={() => handleStatusChange(g.id, 'isSent')} />
                   </div>
+                )}
+
+                {/* 중간차: 도착(풀) → 읽기 + 발송 */}
+                {isMidRound && (
+                  <>
+                    <div style={{ display: 'flex', marginTop: 8, marginBottom: 6 }}>
+                      <StatusButton label="도착했어요!" active={!!myStatus?.isArrived} onClick={() => handleStatusChange(g.id, 'isArrived')} style={{ flex: 1 }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <StatusButton label="다 읽었어요!" active={!!myStatus?.isRead} disabled={!myStatus?.isArrived} onClick={() => handleStatusChange(g.id, 'isRead')} />
+                      <StatusButton label="발송했어요!" active={!!myStatus?.isSent} disabled={!myStatus?.isArrived} onClick={() => handleStatusChange(g.id, 'isSent')} />
+                    </div>
+                    {!myStatus?.isArrived && (
+                      <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 4 }}>도착 확인 후 활성화됩니다</div>
+                    )}
+                  </>
+                )}
+
+                {/* 마지막차: 도착(풀) + 읽기 */}
+                {isLastRound && (
+                  <>
+                    <div style={{ display: 'flex', marginTop: 8, marginBottom: 6 }}>
+                      <StatusButton label="도착했어요!" active={!!myStatus?.isArrived} onClick={() => handleStatusChange(g.id, 'isArrived')} style={{ flex: 1 }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <StatusButton label="다 읽었어요!" active={!!myStatus?.isRead} disabled={!myStatus?.isArrived} onClick={() => handleStatusChange(g.id, 'isRead')} />
+                    </div>
+                    {!myStatus?.isArrived && (
+                      <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 4 }}>도착 확인 후 활성화됩니다</div>
+                    )}
+                  </>
                 )}
               </div>
 
+              {/* 독서 현황 */}
               {(g.participantIds || []).length > 0 && (
                 <div style={{ padding: '14px 16px', borderTop: '0.5px solid var(--border-default)' }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>독서 현황</div>
@@ -321,11 +334,10 @@ useEffect(() => {
                       userId={pid}
                       userName={userMap[pid]?.name}
                       books={bks}
-                      currentRound={gs.round}
                       allStatuses={sm}
                       isMe={pid === user.id}
                       isLast={idx === g.participantIds.length - 1}
-                      totalRounds={g.participantIds.length}
+                      totalRounds={totalRounds}
                     />
                   ))}
                 </div>
@@ -357,16 +369,12 @@ useEffect(() => {
 
       <BottomNav />
 
-      {/* 알림 모달 */}
       {showNotification && (
         <NotificationModal
           invites={pendingInvites}
           userId={user.id}
           onClose={() => setShowNotification(false)}
-          onUpdate={() => {
-            setShowNotification(false);
-            loadData();
-          }}
+          onUpdate={() => { setShowNotification(false); loadData(); }}
         />
       )}
     </div>
@@ -389,8 +397,10 @@ function MyBooksRow({ books, currentRound, userId, totalRounds }) {
   );
 }
 
-function MemberRow({ userId, userName, books, currentRound, allStatuses, isMe, isLast, totalRounds }) {
-  const currentBook = books.find(b => b.round === currentRound && b.exchangeOrder?.includes(userId));
+function MemberRow({ userId, userName, books, allStatuses, isMe, isLast, totalRounds }) {
+  // 개인별 현재 차수 기준으로 상태 표시
+  const personalRound = getPersonalCurrentRound(userId, books, allStatuses, totalRounds);
+  const currentBook = books.find(b => b.round === personalRound && b.exchangeOrder?.includes(userId));
   const status = currentBook ? allStatuses[currentBook.id]?.[userId] : null;
   const { label, variant } = getMemberStatus(status);
 
@@ -405,7 +415,7 @@ function MemberRow({ userId, userName, books, currentRound, allStatuses, isMe, i
         {Array.from({ length: totalRounds }, (_, i) => {
           const round = i + 1;
           const book  = books.find(b => b.round === round && b.exchangeOrder?.includes(userId));
-          const state = getBookCardState(round, currentRound);
+          const state = getBookCardState(round, personalRound);
           return <BookCover key={round} coverUrl={book?.coverUrl} state={state} width={44} height={60} />;
         })}
       </div>

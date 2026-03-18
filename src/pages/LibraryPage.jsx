@@ -61,7 +61,6 @@ export default function LibraryPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // ISBN 기준 중복 제거 통합
   const mergeBooks = () => {
     const map = new Map();
     gyodokBooks.forEach(b => {
@@ -84,9 +83,9 @@ export default function LibraryPage() {
     return Array.from(map.values());
   };
 
-  const allBooks   = mergeBooks();
-  const gyodokOnly = allBooks.filter(b => b._gyodokRecords?.length > 0);
-  const wishOnly   = allBooks.filter(b => b._wishId);
+  const allBooks     = mergeBooks();
+  const gyodokOnly   = allBooks.filter(b => b._gyodokRecords?.length > 0);
+  const wishOnly     = allBooks.filter(b => b._wishId);
   const displayBooks = tab === 'all' ? allBooks : tab === 'gyodok' ? gyodokOnly : wishOnly;
 
   const handleWishToggle = async (book) => {
@@ -113,10 +112,8 @@ export default function LibraryPage() {
     }
   };
 
-  // 서재에서 책 삭제
   const handleDeleteBook = async (book) => {
     if (book._gyodokRecords?.length > 0) {
-      // 교독 책 → hidden_for_owner = true
       for (const rec of book._gyodokRecords) {
         await hideBookForOwner(rec.bookId);
       }
@@ -129,7 +126,6 @@ export default function LibraryPage() {
     showToast('서재에서 삭제했습니다', 'error');
   };
 
-  // 서재에서 교독에 추가
   const handleAddToGyodok = async (book, gyodokId) => {
     try {
       await addBook(gyodokId, {
@@ -151,7 +147,6 @@ export default function LibraryPage() {
     } catch (e) { console.error(e); }
   };
 
-  // 진행중/예정 교독 목록
   const activeGyodoks = gyodoks.filter(g => g.status === 'active' || g.status === 'upcoming');
 
   return (
@@ -248,7 +243,6 @@ export default function LibraryPage() {
   );
 }
 
-/* ── 책 아이템 ── */
 function BookItem({ book, onClick }) {
   return (
     <div onClick={onClick} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
@@ -271,12 +265,11 @@ function BookItem({ book, onClick }) {
   );
 }
 
-/* ── 도서 상세 시트 ── */
 function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete, onAddToGyodok }) {
   const isInWish      = !!book._wishId;
   const gyodokRecords = book._gyodokRecords || [];
   const isInGyodok    = gyodokRecords.length > 0;
-  const [showGyodokPicker, setShowGyodokPicker] = useState(false);
+  const [showGyodokPicker,  setShowGyodokPicker]  = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   return (
@@ -314,13 +307,10 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
             </div>
           </div>
 
-          {/* 책 소개 */}
           {book.description && (
-            <>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 14 }}>
-                {book.description.length > 120 ? book.description.slice(0, 120) + '...' : book.description}
-              </div>
-            </>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 14 }}>
+              {book.description.length > 120 ? book.description.slice(0, 120) + '...' : book.description}
+            </div>
           )}
 
           <Divider />
@@ -352,15 +342,17 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
             </div>
           </div>
 
-          {/* 교독에 추가 + 삭제 버튼 */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <Divider />
+
+          {/* 교독에 추가 + 내 서재에서 삭제하기 — 반반 */}
+          <div style={{ display: 'flex', gap: 8, margin: '12px 0 16px' }}>
             <button
               onClick={() => setShowGyodokPicker(true)}
               style={{
-                flex: 2, height: 42, borderRadius: 'var(--radius-md)',
+                flex: 1, height: 42, borderRadius: 'var(--radius-md)',
                 background: 'var(--accent-green)',
                 border: '0.5px solid var(--border-default)',
-                fontSize: 13, color: 'var(--accent-green-dark)', fontWeight: 500,
+                fontSize: 12, color: 'var(--accent-green-dark)', fontWeight: 500,
                 cursor: 'pointer', fontFamily: 'var(--font-sans)',
               }}
             >
@@ -371,15 +363,17 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
               style={{
                 flex: 1, height: 42, borderRadius: 'var(--radius-md)',
                 background: 'transparent', border: '0.5px solid #c87070',
-                fontSize: 13, color: '#c87070',
+                fontSize: 12, color: '#c87070',
                 cursor: 'pointer', fontFamily: 'var(--font-sans)',
               }}
             >
-              삭제
+              내 서재에서 삭제하기
             </button>
           </div>
 
           <Divider />
+
+          {/* 교독 기록 */}
           <div style={{ padding: '14px 0' }}>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 500, marginBottom: 10 }}>
               교독 기록 {gyodokRecords.length}회
@@ -434,8 +428,7 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
               activeGyodoks.map(g => (
                 <div key={g.id} onClick={() => { onAddToGyodok(g.id); setShowGyodokPicker(false); }} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '12px 0', borderBottom: '0.5px solid var(--border-default)',
-                  cursor: 'pointer',
+                  padding: '12px 0', borderBottom: '0.5px solid var(--border-default)', cursor: 'pointer',
                 }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{g.title}</div>
@@ -470,15 +463,15 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
             boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
           }}>
             {isInGyodok && (
-              <div style={{ fontSize: 11, color: '#c87070', fontWeight: 500, marginBottom: 8 }}>⚠️ 교독으로 진행했던 책</div>
+              <div style={{ fontSize: 11, color: '#c87070', fontWeight: 500, marginBottom: 8 }}>교독으로 진행했던 책</div>
             )}
             <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>
               서재에서 삭제하시겠습니까?
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 20 }}>
               {isInGyodok
-                ? '교독으로 진행했던 책입니다! 삭제한 책은 복구가 불가능합니다. 삭제하시겠습니까?'
-                : '위시리스트에서 삭제됩니다.'
+                ? '교독으로 진행했던 책입니다. 삭제한 책은 복구가 불가능합니다.'
+                : '위시리스트에서도 함께 삭제됩니다.'
               }
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -501,7 +494,6 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
   );
 }
 
-/* ── 도서 검색 시트 ── */
 function BookSearchSheet({ onClose, userId, onAddWish, onAddWishError }) {
   const [query,    setQuery]    = useState('');
   const [results,  setResults]  = useState([]);

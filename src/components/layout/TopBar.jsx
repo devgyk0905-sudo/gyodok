@@ -6,8 +6,12 @@ export default function TopBar({ title, showBack = false, right = null, notifica
 
   return (
     <header style={{
-      position: 'sticky',
+      position: 'fixed',
       top: 0,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '100%',
+      maxWidth: 'var(--app-width)',
       zIndex: 50,
       height: 'var(--top-bar-height)',
       background: 'var(--bg-page)',
@@ -24,8 +28,7 @@ export default function TopBar({ title, showBack = false, right = null, notifica
             style={{ padding: '4px 4px 4px 0', color: 'var(--text-secondary)' }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M11 4L6 9l5 5"
-                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M11 4L6 9l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         )}
@@ -40,7 +43,7 @@ export default function TopBar({ title, showBack = false, right = null, notifica
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* 알림 아이콘 — notificationCount > 0 이거나 onNotificationClick 있을 때 표시 */}
+        {/* 알림 아이콘 */}
         {onNotificationClick && (
           <button
             onClick={onNotificationClick}
@@ -56,7 +59,10 @@ export default function TopBar({ title, showBack = false, right = null, notifica
                 stroke={notificationCount > 0 ? 'var(--accent-primary)' : 'var(--text-tertiary)'}
                 strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"
               />
-              <path d="M8 15.5a2 2 0 004 0" stroke={notificationCount > 0 ? 'var(--accent-primary)' : 'var(--text-tertiary)'} strokeWidth="1.3"/>
+              <path d="M8 15.5a2 2 0 004 0"
+                stroke={notificationCount > 0 ? 'var(--accent-primary)' : 'var(--text-tertiary)'}
+                strokeWidth="1.3"
+              />
             </svg>
             {notificationCount > 0 && (
               <div style={{

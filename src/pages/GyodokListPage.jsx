@@ -52,7 +52,6 @@ export default function GyodokListPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  // 탭 포커스 복귀 시 초대 알림 재로드
   useEffect(() => {
     if (!user) return;
     const handleVisibility = () => {
@@ -90,11 +89,24 @@ export default function GyodokListPage() {
     });
 
   return (
-    <div className="page" style={{ position: 'relative' }}>
+    <div className="page">
       <TopBar
         title="교독"
         notificationCount={pendingInvites.length}
         onNotificationClick={() => setShowNotification(true)}
+        right={
+          <button
+            onClick={() => navigate('/admin/create')}
+            style={{
+              padding: '5px 12px', borderRadius: 'var(--radius-full)',
+              background: 'var(--accent-amber)', border: '0.5px solid var(--border-strong)',
+              fontSize: 12, color: 'var(--accent-amber-text)', fontWeight: 500,
+              cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
+            }}
+          >
+            + 교독 만들기
+          </button>
+        }
       />
 
       {/* 초대 배너 */}
@@ -146,11 +158,10 @@ export default function GyodokListPage() {
         ))}
       </div>
 
-      {/* 리스트 */}
-      <div style={{ padding: '0 14px 80px' }}>
+      <div style={{ padding: '0 14px' }}>
         {loading && <Spinner />}
         {!loading && filtered.length === 0 && (
-          <EmptyState message="교독 모임이 없습니다" sub={tab === 'all' ? '+ 버튼을 눌러 새 교독을 만들어 보세요' : ''} />
+          <EmptyState message="교독 모임이 없습니다" sub={tab === 'all' ? '+ 교독 만들기 버튼으로 새 교독을 만들어 보세요' : ''} />
         )}
         {filtered.map(g => (
           <GyodokCard
@@ -164,34 +175,8 @@ export default function GyodokListPage() {
         ))}
       </div>
 
-      {/* FAB — 교독 생성 (모든 유저) */}
-      <button
-        onClick={() => navigate('/admin/create')}
-        style={{
-          position: 'fixed',
-          bottom: 'calc(var(--bottom-nav-height, 56px) + 16px)',
-          right: '50%',
-          transform: 'translateX(calc(50% - 16px))',
-          // 앱 최대 너비 기준 우측 정렬
-          marginRight: 'max(calc((100vw - var(--app-width, 430px)) / 2), 0px)',
-          width: 48, height: 48,
-          borderRadius: '50%',
-          background: 'var(--accent-primary)',
-          border: 'none',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer',
-          boxShadow: '0 3px 10px rgba(0,0,0,0.18)',
-          zIndex: 100,
-        }}
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path d="M10 3v14M3 10h14" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/>
-        </svg>
-      </button>
-
       <BottomNav />
 
-      {/* 알림 모달 */}
       {showNotification && (
         <NotificationModal
           invites={pendingInvites}

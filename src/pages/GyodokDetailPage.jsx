@@ -144,10 +144,8 @@ export default function GyodokDetailPage() {
     <div className="page"><TopBar title="교독 상세" showBack /><EmptyState message="교독 정보를 불러올 수 없습니다" /><BottomNav /></div>
   );
 
-  // 전체 관리자 또는 이 교독의 방장
   const isHost    = gyodok.createdBy === user?.id;
   const canManage = isAdmin || isHost;
-
   const totalRounds = gyodok.participantIds?.length || 3;
 
   const gyodokStatus = calcGyodokStatus(
@@ -157,9 +155,7 @@ export default function GyodokDetailPage() {
 
   const leftParticipantIds = [
     ...new Set(
-      books
-        .map(b => b.ownerId)
-        .filter(oid => !(gyodok.participantIds || []).includes(oid))
+      books.map(b => b.ownerId).filter(oid => !(gyodok.participantIds || []).includes(oid))
     )
   ];
 
@@ -171,10 +167,29 @@ export default function GyodokDetailPage() {
 
   return (
     <div className="page">
-      <TopBar title="교독 상세" showBack />
+      <TopBar
+        title="교독 상세"
+        showBack
+        right={
+          canManage ? (
+            <button
+              onClick={() => navigate(`/admin/manage/${id}`)}
+              style={{
+                padding: '5px 10px', borderRadius: 8,
+                background: 'var(--accent-amber)',
+                border: '0.5px solid var(--border-strong)',
+                fontSize: 11, color: 'var(--accent-amber-text)',
+                cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
+              }}
+            >
+              교독 관리
+            </button>
+          ) : null
+        }
+      />
 
       <div className="page-content fade-in">
-        {/* 교독 헤더 — 교독 관리 버튼 제거 */}
+        {/* 교독 헤더 */}
         <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginBottom: 12 }}>
           <CollageImage books={books} />
           <div style={{ flex: 1 }}>
@@ -328,32 +343,9 @@ export default function GyodokDetailPage() {
           );
         })}
 
-        {/* 하단 버튼 영역 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 16 }}>
-          {/* 교독 관리 — 방장 또는 관리자 */}
-          {canManage && (
-            <button
-  onClick={() => navigate('/admin/create')}
-  style={{
-    position: 'fixed',
-    bottom: 'calc(var(--bottom-nav-height, 56px) + 16px)',
-    right: 16,
-    width: 48, height: 48,
-    borderRadius: '50%',
-    background: 'var(--accent-primary)',
-    border: 'none',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    cursor: 'pointer',
-    boxShadow: '0 3px 10px rgba(0,0,0,0.18)',
-    zIndex: 100,
-  }}
->
-              교독 관리
-            </button>
-          )}
-
-          {/* 교독 나가기 — 방장/관리자 제외 */}
-          {!canManage && (
+        {/* 교독 나가기 — 방장/관리자 제외 */}
+        {!canManage && (
+          <div style={{ paddingTop: 16 }}>
             <button
               onClick={handleLeaveGyodok}
               style={{
@@ -366,8 +358,8 @@ export default function GyodokDetailPage() {
             >
               교독에서 나가기
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div style={{ height: 16 }} />
       </div>
@@ -508,14 +500,12 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 8 }}>
                 상태 변경 <span style={{ color: 'var(--accent-green-dark)' }}>— 내 책</span>
               </div>
-
               {isFirstRound && (
                 <div style={{ display: 'flex', gap: 6 }}>
                   <StatusButton label="다 읽었어요!" active={!!status?.isRead} onClick={() => onStatusChange('isRead')} />
                   <StatusButton label="발송했어요!" active={!!status?.isSent} onClick={() => onStatusChange('isSent')} />
                 </div>
               )}
-
               {isMidRound && (
                 <>
                   <div style={{ display: 'flex', marginBottom: 6 }}>
@@ -526,13 +516,10 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,
                     <StatusButton label="발송했어요!" active={!!status?.isSent} disabled={!status?.isArrived} onClick={() => onStatusChange('isSent')} />
                   </div>
                   {!status?.isArrived && (
-                    <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 6 }}>
-                      도착 확인 후 활성화됩니다
-                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 6 }}>도착 확인 후 활성화됩니다</div>
                   )}
                 </>
               )}
-
               {isLastRound && (
                 <>
                   <div style={{ display: 'flex', marginBottom: 6 }}>
@@ -542,9 +529,7 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,
                     <StatusButton label="다 읽었어요!" active={!!status?.isRead} disabled={!status?.isArrived} onClick={() => onStatusChange('isRead')} />
                   </div>
                   {!status?.isArrived && (
-                    <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 6 }}>
-                      도착 확인 후 활성화됩니다
-                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 6 }}>도착 확인 후 활성화됩니다</div>
                   )}
                 </>
               )}
@@ -668,8 +653,7 @@ function BookSearchSheet({ onClose, onAddBook, onAddWish }) {
 function BookSelectSheet({ round, books, userId, userMap, participantIds, onClose, onSelect }) {
   const myBooks = books.filter(b => b.ownerId === userId);
   const candidates = books.filter(b =>
-    b.round === 1 &&
-    b.ownerId !== userId &&
+    b.round === 1 && b.ownerId !== userId &&
     !myBooks.find(mb => mb.isbn && mb.isbn === b.isbn)
   );
 

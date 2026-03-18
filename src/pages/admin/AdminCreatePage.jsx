@@ -22,7 +22,7 @@ export default function AdminCreatePage() {
         status:         new Date(startDate) <= new Date() ? 'active' : 'upcoming',
         startDate:      new Date(startDate),
         endDate:        endDate ? new Date(endDate) : null,
-        participantIds: [user.id],   // 관리자만 초기 참여자
+        participantIds: [user.id],
         pendingIds:     [],
         editableIds:    [],
         checkpoints:    [],
@@ -46,7 +46,7 @@ export default function AdminCreatePage() {
             type="text"
             value={title}
             onChange={e => setTitle(e.target.value)}
-            placeholder="예: 동갑내기자리 3회차"
+            placeholder=""
             style={inputStyle}
           />
         </FormSection>
@@ -69,13 +69,13 @@ export default function AdminCreatePage() {
           />
         </FormSection>
 
-        {/* 안내 문구 */}
+        {/* 안내 문구 — 중앙정렬 */}
         <div style={{
           padding: '10px 14px', borderRadius: 'var(--radius-sm)',
           background: 'var(--bg-surface-secondary)',
           border: '0.5px solid var(--border-default)',
           fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.7,
-          marginBottom: 14,
+          marginBottom: 14, textAlign: 'center',
         }}>
           교독 생성 후 <span style={{ color: 'var(--accent-primary)', fontWeight: 500 }}>교독 관리</span> 페이지에서<br />
           참여자를 초대할 수 있습니다.
