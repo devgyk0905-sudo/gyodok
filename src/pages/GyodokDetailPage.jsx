@@ -333,15 +333,21 @@ export default function GyodokDetailPage() {
           {/* 교독 관리 — 방장 또는 관리자 */}
           {canManage && (
             <button
-              onClick={() => navigate(`/admin/manage/${id}`)}
-              style={{
-                width: '100%', height: 40, borderRadius: 'var(--radius-md)',
-                background: 'var(--accent-amber)',
-                border: '0.5px solid var(--border-strong)',
-                fontSize: 13, color: 'var(--accent-amber-text)', fontWeight: 500,
-                cursor: 'pointer', fontFamily: 'var(--font-sans)',
-              }}
-            >
+  onClick={() => navigate('/admin/create')}
+  style={{
+    position: 'fixed',
+    bottom: 'calc(var(--bottom-nav-height, 56px) + 16px)',
+    right: 16,
+    width: 48, height: 48,
+    borderRadius: '50%',
+    background: 'var(--accent-primary)',
+    border: 'none',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer',
+    boxShadow: '0 3px 10px rgba(0,0,0,0.18)',
+    zIndex: 100,
+  }}
+>
               교독 관리
             </button>
           )}
