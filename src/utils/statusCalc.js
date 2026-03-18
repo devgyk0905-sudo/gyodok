@@ -60,3 +60,9 @@ export function calcGyodokStatus(participants, books, allStatuses, totalRounds =
 
   return { round: totalRounds, label: `${totalRounds}/${totalRounds}`, statusText: '교독 완료!' };
 }
+
+export function getBookCardState(bookRound, currentRound) {
+  if (bookRound < currentRound)  return 'done';
+  if (bookRound === currentRound) return 'current';
+  return 'pending';
+}
