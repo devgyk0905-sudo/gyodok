@@ -10,7 +10,7 @@ import {
 import {
   getGyodok, getBooks, getBookStatus, updateBookStatus,
   addFeedItem, getAllUsers, addBook, addToWishlist, deleteBook,
-  removeFromWishlistByIsbn, getWishlistByIsbn,
+  removeFromWishlistByIsbn,
 } from '../supabase/db';
 import { searchBooks } from '../utils/aladinApi';
 import { getBookCardState, calcGyodokStatus } from '../utils/statusCalc';
@@ -28,7 +28,6 @@ export default function GyodokDetailPage() {
   const [userMap,        setUserMap]        = useState({});
   const [showBookSearch, setShowBookSearch] = useState(false);
   const [showBookSelect, setShowBookSelect] = useState(null);
-  const [wishConfirm,    setWishConfirm]    = useState(null); // { book, round }
   const [toast,          setToast]          = useState({ msg: '', type: 'error' });
   const [selectedMember, setSelectedMember] = useState(null);
 
@@ -86,7 +85,7 @@ export default function GyodokDetailPage() {
         exchangeOrder: [user.id],
         ...bookData,
       });
-      // 위시리스트에 있으면 자동 삭제
+      // 위시리스트에 있으면 조용히 자동 삭제
       if (bookData.isbn) {
         await removeFromWishlistByIsbn(user.id, bookData.isbn);
       }
@@ -99,13 +98,6 @@ export default function GyodokDetailPage() {
   };
 
   const checkWishAndAdd = async (bookData, round) => {
-    if (bookData.isbn) {
-      const inWish = await getWishlistByIsbn(user.id, bookData.isbn);
-      if (inWish) {
-        setWishConfirm({ book: bookData, round });
-        return;
-      }
-    }
     await doAddBook(bookData, round);
   };
 
@@ -321,49 +313,6 @@ export default function GyodokDetailPage() {
 
       {/* 토스트 메시지 */}
       <Toast message={toast.msg} type={toast.type} />
-
-      {/* 위시리스트 자동 삭제 확인 팝업 */}
-      {wishConfirm && (
-        <div style={{
-          position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
-          width: '100%', maxWidth: 'var(--app-width)', bottom: 0,
-          background: 'rgba(0,0,0,0.4)', zIndex: 400,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 28px',
-        }} onClick={() => setWishConfirm(null)}>
-          <div onClick={e => e.stopPropagation()} style={{
-            width: '100%', background: 'var(--bg-surface)',
-            borderRadius: 'var(--radius-xl)', padding: '24px 20px 20px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-          }}>
-            <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>
-              위시리스트에서 자동 삭제
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
-              <span style={{ fontWeight: 500 }}>《{wishConfirm.book.title}》</span>이 위시리스트에 있습니다.{'\n'}
-              교독에 추가하면 위시리스트에서 자동으로 삭제됩니다.
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setWishConfirm(null)} style={{
-                flex: 1, height: 40, borderRadius: 'var(--radius-md)',
-                border: '0.5px solid var(--border-input)',
-                background: 'var(--bg-surface-secondary)',
-                fontSize: 13, color: 'var(--text-tertiary)',
-                cursor: 'pointer', fontFamily: 'var(--font-sans)',
-              }}>
-                취소
-              </button>
-              <button onClick={() => doAddBook(wishConfirm.book, wishConfirm.round)} style={{
-                flex: 2, height: 40, borderRadius: 'var(--radius-md)',
-                background: 'var(--accent-primary)', border: 'none',
-                fontSize: 13, color: '#fff', fontWeight: 500,
-                cursor: 'pointer', fontFamily: 'var(--font-sans)',
-              }}>
-                확인
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 참여자 프로필 팝업 */}
       {selectedMember && (
