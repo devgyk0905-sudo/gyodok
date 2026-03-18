@@ -126,6 +126,12 @@ export const deleteBook = async (bookId) => {
   if (error) throw error;
 };
 
+export const hideBookForOwner = async (bookId) => {
+  const { error } = await supabase
+    .from('books').update({ hidden_for_owner: true }).eq('id', bookId);
+  if (error) throw error;
+};
+
 export const updateBook = async (bookId, fields) => {
   const { error } = await supabase
     .from('books').update(snakeCase(fields)).eq('id', bookId);
