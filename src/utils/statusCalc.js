@@ -66,3 +66,45 @@ export function getBookCardState(bookRound, currentRound) {
   if (bookRound === currentRound) return 'current';
   return 'pending';
 }
+
+export function getMyStatusText(round, status) {
+  const ordinals = ['', '1권째', '2권째', '3권째'];
+  const ord = ordinals[round] || `${round}권째`;
+  if (!status) return `${ord} 읽는 중`;
+  if (status.isArrived) return `${ord} 교환 완료`;
+  if (status.isSent)    return `${ord} 발송 완료`;
+  if (status.isRead)    return `${ord} 완독 완료`;
+  return `${ord} 읽는 중`;
+}
+
+export function getMemberStatus(status) {
+  if (!status) return { label: '미시작', variant: 'gray' };
+  if (status.isArrived) return { label: '교환 완료', variant: 'green' };
+  if (status.isSent)    return { label: '발송함',   variant: 'green' };
+  if (status.isRead)    return { label: '완독',     variant: 'green' };
+  return { label: '미시작', variant: 'gray' };
+}
+
+export function calcDday(targetDate) {
+  if (!targetDate) return null;
+  try {
+    const target = new Date(targetDate);
+    const now    = new Date();
+    now.setHours(0, 0, 0, 0);
+    target.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+    if (diff > 0)  return `D-${diff}`;
+    if (diff === 0) return 'D-Day';
+    return `D+${Math.abs(diff)}`;
+  } catch { return null; }
+}
+
+export function getNextCheckpoint(checkpoints) {
+  if (!checkpoints || checkpoints.length === 0) return null;
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const upcoming = checkpoints
+    .filter(cp => cp.date && new Date(cp.date) >= now)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  return upcoming[0] || checkpoints[checkpoints.length - 1];
+}
