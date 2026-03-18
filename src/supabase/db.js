@@ -4,14 +4,14 @@ import { supabase } from './client';
 
 export const getUser = async (userId) => {
   const { data } = await supabase
-    .from('users').select('*').eq('id', userId).single();
-  return data;
+    .from('users').select('*').eq('id', userId).maybeSingle();
+  return data ? camelCase(data) : null;
 };
 
 export const getUserByName = async (name) => {
   const { data } = await supabase
-    .from('users').select('*').eq('name', name.trim()).single();
-  return data;
+    .from('users').select('*').eq('name', name.trim()).maybeSingle();
+  return data ? camelCase(data) : null;
 };
 
 export const updateUser = async (userId, fields) => {
