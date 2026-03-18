@@ -243,16 +243,26 @@ export default function GyodokDetailPage() {
 
       {/* 플로팅 토스트 */}
       {toast && (
-        <div style={{
-          position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
-          background: 'rgba(40,35,28,0.88)', color: '#fff',
-          padding: '10px 20px', borderRadius: 20,
-          fontSize: 12, whiteSpace: 'nowrap',
-          zIndex: 400, animation: 'fadeIn 0.2s ease',
-        }}>
-          {toast}
-        </div>
-      )}
+  <div style={{
+    position: 'fixed',
+    top: '33%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '100%',
+    maxWidth: 'var(--app-width)',
+    background: 'var(--accent-amber)',
+    color: 'var(--accent-amber-text)',
+    padding: '13px 20px',
+    borderRadius: 0,
+    fontSize: 13,
+    fontWeight: 500,
+    textAlign: 'center',
+    zIndex: 400,
+    animation: 'fadeIn 0.2s ease',
+  }}>
+    {toast}
+  </div>
+)}
 
       {selectedBook && (
         <BookFullSheet

@@ -9,18 +9,28 @@ export function AuthProvider({ children }) {
 
   // 세션 복원
   useEffect(() => {
-    const saved = localStorage.getItem('gyodok_user');
-    if (saved) {
-      try { setUser(JSON.parse(saved)); }
-      catch { localStorage.removeItem('gyodok_user'); }
-    }
-    setLoading(false);
+    (async () => {
+      const saved = localStorage.getItem('gyodok_user');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const fresh = await getUserByName(parsed.name);
+          if (fresh) {
+            localStorage.setItem('gyodok_user', JSON.stringify(fresh));
+            setUser(fresh);
+          } else {
+            localStorage.removeItem('gyodok_user');
+          }
+        } catch { localStorage.removeItem('gyodok_user'); }
+      }
+      setLoading(false);
+    })();
   }, []);
 
   // 로그인: 이름 + 코드 검증
   const login = async (name, code) => {
     const userData = await getUserByName(name.trim());
-    if (!userData)                  throw new Error('NOT_FOUND');
+    if (!userData)                     throw new Error('NOT_FOUND');
     if (userData.code !== code.trim()) throw new Error('WRONG_CODE');
 
     localStorage.setItem('gyodok_user', JSON.stringify(userData));
