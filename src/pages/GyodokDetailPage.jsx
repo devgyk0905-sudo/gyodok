@@ -148,9 +148,19 @@ export default function GyodokDetailPage() {
     books, allStatuses, totalRounds
   );
 
+  // 나간 참여자: books에 ownerId가 있지만 participantIds에 없는 경우
+  const leftParticipantIds = [
+    ...new Set(
+      books
+        .map(b => b.ownerId)
+        .filter(oid => !(gyodok.participantIds || []).includes(oid))
+    )
+  ];
+
   const sortedParticipants = [
     ...(gyodok.participantIds || []).filter(pid => pid === user?.id),
     ...(gyodok.participantIds || []).filter(pid => pid !== user?.id),
+    ...leftParticipantIds, // 나간 사람은 맨 뒤
   ];
 
   return (
@@ -171,7 +181,6 @@ export default function GyodokDetailPage() {
             <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 3 }}>
               {formatDate(gyodok.startDate)}{gyodok.endDate ? ` ~ ${formatDate(gyodok.endDate)}` : ''}
             </div>
-            {/* 참여자 아바타 */}
             <div style={{ display: 'flex', marginTop: 6 }}>
               {(gyodok.participantIds || []).slice(0, 4).map((pid, i) => (
                 <div key={pid} style={{
@@ -208,18 +217,19 @@ export default function GyodokDetailPage() {
 
         {sortedParticipants.map((pid, pidIdx) => {
           const isMe        = pid === user?.id;
+          const isLeft      = leftParticipantIds.includes(pid);
           const isLast      = pidIdx === sortedParticipants.length - 1;
           const memberName  = userMap[pid]?.name || pid;
           const memberData  = userMap[pid];
           const profileSize  = isMe ? 48 : 36;
           const nameFontSize = isMe ? 10 : 9;
 
-          // 책 카드 크기: 내 행은 크게
           const bookW = isMe ? 52 : 44;
           const bookH = isMe ? 70 : 60;
 
-          // 개인별 현재 차수
-          const personalRound = getPersonalCurrentRound(pid, books, allStatuses, totalRounds);
+          const personalRound = isLeft
+            ? totalRounds + 1  // 나간 사람은 모든 카드 'done' 처리
+            : getPersonalCurrentRound(pid, books, allStatuses, totalRounds);
 
           const myBooks = Array.from({ length: totalRounds }, (_, i) => {
             const round = i + 1;
@@ -230,39 +240,44 @@ export default function GyodokDetailPage() {
             <div key={pid} style={{
               marginBottom: isLast ? 0 : 16, paddingBottom: isLast ? 0 : 16,
               borderBottom: isLast ? 'none' : '0.5px solid var(--border-default)',
+              opacity: isLeft ? 0.6 : 1,
             }}>
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 {/* 프로필 */}
                 <div
-                  onClick={() => !isMe && setSelectedMember(memberData)}
+                  onClick={() => !isMe && !isLeft && setSelectedMember(memberData)}
                   style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center',
                     gap: 4, width: profileSize + 4, flexShrink: 0,
-                    cursor: isMe ? 'default' : 'pointer',
+                    cursor: isMe || isLeft ? 'default' : 'pointer',
                   }}
                 >
                   <div style={{
                     width: profileSize, height: profileSize, borderRadius: '50%',
-                    background: isMe ? 'var(--accent-primary)' : 'var(--accent-green)',
+                    background: isLeft
+                      ? 'var(--border-strong)'
+                      : isMe ? 'var(--accent-primary)' : 'var(--accent-green)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: isMe ? 16 : 13, fontWeight: 500,
-                    color: isMe ? '#fff' : 'var(--accent-green-dark)',
+                    color: isLeft ? 'var(--text-hint)' : isMe ? '#fff' : 'var(--accent-green-dark)',
                     overflow: 'hidden', flexShrink: 0,
-                    border: isMe ? '2px solid var(--accent-primary)' : '2px solid var(--accent-green)',
+                    border: isLeft
+                      ? '2px solid var(--border-strong)'
+                      : isMe ? '2px solid var(--accent-primary)' : '2px solid var(--accent-green)',
                   }}>
-                    {memberData?.profileImage
+                    {memberData?.profileImage && !isLeft
                       ? <img src={memberData.profileImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : memberName?.charAt(0)
                     }
                   </div>
                   <span style={{
-                    fontSize: nameFontSize, color: 'var(--text-secondary)',
+                    fontSize: nameFontSize, color: isLeft ? 'var(--text-hint)' : 'var(--text-secondary)',
                     textAlign: 'center', lineHeight: 1.3,
                     maxWidth: profileSize + 4, overflow: 'hidden',
                     textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     fontWeight: isMe ? 500 : 400,
                   }}>
-                    {isMe ? `${user.name} (나)` : memberName}
+                    {isMe ? `${user.name} (나)` : isLeft ? `${memberName} (나감)` : memberName}
                   </span>
                 </div>
 
@@ -270,10 +285,11 @@ export default function GyodokDetailPage() {
                 <div style={{ display: 'flex', gap: 10, flex: 1, alignItems: 'flex-start', paddingTop: isMe ? 4 : 0 }}>
                   {myBooks.map((book, i) => {
                     const round = i + 1;
-                    const state = getBookCardState(round, personalRound);
+                    // 나간 사람은 모든 카드 회색(done), 아니면 개인별 차수 기준
+                    const state = isLeft ? 'done' : getBookCardState(round, personalRound);
                     const st    = book ? allStatuses[book.id]?.[pid] : null;
-                    const canSelect = isMe && !book && round > 1;
-                    const canSearch = isMe && !book && round === 1;
+                    const canSelect = !isLeft && isMe && !book && round > 1;
+                    const canSearch = !isLeft && isMe && !book && round === 1;
                     return (
                       <div key={round} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                         <div
@@ -314,12 +330,14 @@ export default function GyodokDetailPage() {
                               state={state}
                               width={bookW}
                               height={bookH}
-                              onClick={book ? () => setSelectedBook({ ...book, _ownerIs: pid, _status: allStatuses[book.id]?.[pid] }) : undefined}
+                              onClick={book && !isLeft ? () => setSelectedBook({ ...book, _ownerIs: pid, _status: allStatuses[book.id]?.[pid] }) : undefined}
                             />
                           )}
                         </div>
                         <span style={{ fontSize: 8, color: 'var(--text-tertiary)' }}>{round}차</span>
-                        <BookStatusBadge round={round} currentRound={personalRound} status={st} />
+                        {!isLeft && (
+                          <BookStatusBadge round={round} currentRound={personalRound} status={st} />
+                        )}
                       </div>
                     );
                   })}
