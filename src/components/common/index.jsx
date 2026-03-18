@@ -24,10 +24,10 @@ export function Pill({ variant = 'green', children, style }) {
 
 /* ===== 책 썸네일 ===== */
 export function BookThumb({
-  state = 'pending',   // 'done' | 'current' | 'pending'
+  state = 'pending',
   style,
   onClick,
-  size = 'md',          // 'sm' | 'md'
+  size = 'md',
 }) {
   const heights = { sm: 48, md: 60 };
   const widths  = { sm: 34, md: 44 };
@@ -131,7 +131,7 @@ export function ProfileCircle({ name, isMe = false, size = 28, style }) {
 }
 
 /* ===== 상태 버튼 (다 읽었어요 / 발송했어요 / 도착했어요) ===== */
-export function StatusButton({ label, active = false, disabled = false, onClick }) {
+export function StatusButton({ label, active = false, disabled = false, onClick, style }) {
   return (
     <button
       onClick={disabled ? undefined : onClick}
@@ -147,6 +147,7 @@ export function StatusButton({ label, active = false, disabled = false, onClick 
         opacity: disabled ? 0.36 : 1,
         transition: 'all var(--transition-fast)',
         fontFamily: 'var(--font-sans)',
+        ...style,
       }}
     >
       {label}
@@ -221,7 +222,7 @@ export function FullSheet({ children, onClose }) {
         onClick={e => e.stopPropagation()}
         className="slide-up"
         style={{
-          marginTop: 52,       /* TopBar 높이만큼 아래에서 시작 */
+          marginTop: 52,
           flex: 1,
           background: 'var(--bg-surface)',
           borderRadius: '0 0 0 0',

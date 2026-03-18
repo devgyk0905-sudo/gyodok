@@ -67,9 +67,7 @@ export default function GyodokDetailPage() {
     if (!user) return;
     const current = allStatuses[book.id]?.[user.id] || {};
     const updated  = { ...current, [field]: !current[field] };
-    // 발송 취소 시 도착도 취소
     if (field === 'isSent' && !updated.isSent) updated.isArrived = false;
-    // 도착 취소 시 읽기/발송도 취소
     if (field === 'isArrived' && !updated.isArrived) {
       updated.isRead = false;
       updated.isSent = false;
@@ -146,7 +144,10 @@ export default function GyodokDetailPage() {
     <div className="page"><TopBar title="교독 상세" showBack /><EmptyState message="교독 정보를 불러올 수 없습니다" /><BottomNav /></div>
   );
 
-  const canEdit     = isAdmin || gyodok.editableIds?.includes(user?.id);
+  // 전체 관리자 또는 이 교독의 방장
+  const isHost    = gyodok.createdBy === user?.id;
+  const canManage = isAdmin || isHost;
+
   const totalRounds = gyodok.participantIds?.length || 3;
 
   const gyodokStatus = calcGyodokStatus(
@@ -154,7 +155,6 @@ export default function GyodokDetailPage() {
     books, allStatuses, totalRounds
   );
 
-  // 나간 참여자: books에 ownerId가 있지만 participantIds에 없는 경우
   const leftParticipantIds = [
     ...new Set(
       books
@@ -174,7 +174,7 @@ export default function GyodokDetailPage() {
       <TopBar title="교독 상세" showBack />
 
       <div className="page-content fade-in">
-        {/* 교독 헤더 */}
+        {/* 교독 헤더 — 교독 관리 버튼 제거 */}
         <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginBottom: 12 }}>
           <CollageImage books={books} />
           <div style={{ flex: 1 }}>
@@ -197,23 +197,6 @@ export default function GyodokDetailPage() {
               ))}
             </div>
           </div>
-
-          {isAdmin && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-              <button
-                onClick={() => navigate(`/admin/manage/${id}`)}
-                style={{
-                  padding: '5px 10px', borderRadius: 8,
-                  background: 'var(--accent-amber)',
-                  border: '0.5px solid var(--border-strong)',
-                  fontSize: 11, color: 'var(--accent-amber-text)',
-                  cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
-                }}
-              >
-                교독 관리
-              </button>
-            </div>
-          )}
         </div>
 
         <Divider />
@@ -248,7 +231,6 @@ export default function GyodokDetailPage() {
               opacity: isLeft ? 0.6 : 1,
             }}>
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                {/* 프로필 */}
                 <div
                   onClick={() => !isMe && !isLeft && setSelectedMember(memberData)}
                   style={{
@@ -282,7 +264,6 @@ export default function GyodokDetailPage() {
                   </span>
                 </div>
 
-                {/* 책 목록 */}
                 <div style={{ display: 'flex', gap: 10, flex: 1, alignItems: 'flex-start', paddingTop: isMe ? 4 : 0 }}>
                   {myBooks.map((book, i) => {
                     const round = i + 1;
@@ -347,8 +328,26 @@ export default function GyodokDetailPage() {
           );
         })}
 
-        {!isAdmin && (
-          <div style={{ paddingTop: 8 }}>
+        {/* 하단 버튼 영역 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 16 }}>
+          {/* 교독 관리 — 방장 또는 관리자 */}
+          {canManage && (
+            <button
+              onClick={() => navigate(`/admin/manage/${id}`)}
+              style={{
+                width: '100%', height: 40, borderRadius: 'var(--radius-md)',
+                background: 'var(--accent-amber)',
+                border: '0.5px solid var(--border-strong)',
+                fontSize: 13, color: 'var(--accent-amber-text)', fontWeight: 500,
+                cursor: 'pointer', fontFamily: 'var(--font-sans)',
+              }}
+            >
+              교독 관리
+            </button>
+          )}
+
+          {/* 교독 나가기 — 방장/관리자 제외 */}
+          {!canManage && (
             <button
               onClick={handleLeaveGyodok}
               style={{
@@ -361,8 +360,8 @@ export default function GyodokDetailPage() {
             >
               교독에서 나가기
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         <div style={{ height: 16 }} />
       </div>
@@ -381,7 +380,7 @@ export default function GyodokDetailPage() {
           ownerUserId={selectedBook._ownerIs}
           currentUserId={user?.id}
           ownerName={userMap[selectedBook._ownerIs]?.name || selectedBook._ownerIs}
-          isAdmin={isAdmin}
+          isAdmin={canManage}
           totalRounds={totalRounds}
           onClose={() => setSelectedBook(null)}
           onStatusChange={(field) => handleStatusChange(selectedBook, field)}
@@ -458,12 +457,11 @@ function BookStatusBadge({ round, currentRound, status }) {
 
 function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,
   isAdmin, onClose, onStatusChange, onDeleteBook, userMap, totalRounds }) {
-  const isMyBook  = ownerUserId === currentUserId;
-  const canDelete = isMyBook || isAdmin;
-  const round = book.round || 1;
+  const isMyBook     = ownerUserId === currentUserId;
+  const canDelete    = isMyBook || isAdmin;
+  const round        = book.round || 1;
   const isFirstRound = round === 1;
   const isLastRound  = round === totalRounds;
-  // 중간차: 1차도 마지막차도 아닌 경우 (totalRounds >= 3일 때만 존재)
   const isMidRound   = !isFirstRound && !isLastRound;
 
   return (
@@ -505,7 +503,6 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,
                 상태 변경 <span style={{ color: 'var(--accent-green-dark)' }}>— 내 책</span>
               </div>
 
-              {/* 1차: 읽기 + 발송 */}
               {isFirstRound && (
                 <div style={{ display: 'flex', gap: 6 }}>
                   <StatusButton label="다 읽었어요!" active={!!status?.isRead} onClick={() => onStatusChange('isRead')} />
@@ -513,30 +510,14 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,
                 </div>
               )}
 
-              {/* 중간차: 도착(풀버튼) → 읽기 + 발송 */}
               {isMidRound && (
                 <>
-                  <div style={{ marginBottom: 6 }}>
-                    <StatusButton
-                      label="도착했어요!"
-                      active={!!status?.isArrived}
-                      onClick={() => onStatusChange('isArrived')}
-                      fullWidth
-                    />
+                  <div style={{ display: 'flex', marginBottom: 6 }}>
+                    <StatusButton label="도착했어요!" active={!!status?.isArrived} onClick={() => onStatusChange('isArrived')} style={{ flex: 1 }} />
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <StatusButton
-                      label="다 읽었어요!"
-                      active={!!status?.isRead}
-                      disabled={!status?.isArrived}
-                      onClick={() => onStatusChange('isRead')}
-                    />
-                    <StatusButton
-                      label="발송했어요!"
-                      active={!!status?.isSent}
-                      disabled={!status?.isArrived}
-                      onClick={() => onStatusChange('isSent')}
-                    />
+                    <StatusButton label="다 읽었어요!" active={!!status?.isRead} disabled={!status?.isArrived} onClick={() => onStatusChange('isRead')} />
+                    <StatusButton label="발송했어요!" active={!!status?.isSent} disabled={!status?.isArrived} onClick={() => onStatusChange('isSent')} />
                   </div>
                   {!status?.isArrived && (
                     <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 6 }}>
@@ -546,24 +527,13 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,
                 </>
               )}
 
-              {/* 마지막차: 도착 + 읽기 (발송 없음) */}
               {isLastRound && (
                 <>
-                  <div style={{ marginBottom: 6 }}>
-                    <StatusButton
-                      label="도착했어요!"
-                      active={!!status?.isArrived}
-                      onClick={() => onStatusChange('isArrived')}
-                      fullWidth
-                    />
+                  <div style={{ display: 'flex', marginBottom: 6 }}>
+                    <StatusButton label="도착했어요!" active={!!status?.isArrived} onClick={() => onStatusChange('isArrived')} style={{ flex: 1 }} />
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <StatusButton
-                      label="다 읽었어요!"
-                      active={!!status?.isRead}
-                      disabled={!status?.isArrived}
-                      onClick={() => onStatusChange('isRead')}
-                    />
+                    <StatusButton label="다 읽었어요!" active={!!status?.isRead} disabled={!status?.isArrived} onClick={() => onStatusChange('isRead')} />
                   </div>
                   {!status?.isArrived && (
                     <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 6 }}>

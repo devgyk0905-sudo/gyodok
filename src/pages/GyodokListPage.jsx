@@ -53,16 +53,16 @@ export default function GyodokListPage() {
   }, [user]);
 
   // 탭 포커스 복귀 시 초대 알림 재로드
-useEffect(() => {
-  if (!user) return;
-  const handleVisibility = () => {
-    if (document.visibilityState === 'visible') {
-      getPendingInvites(user.id).then(setPendingInvites);
-    }
-  };
-  document.addEventListener('visibilitychange', handleVisibility);
-  return () => document.removeEventListener('visibilitychange', handleVisibility);
-}, [user]);
+  useEffect(() => {
+    if (!user) return;
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        getPendingInvites(user.id).then(setPendingInvites);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [user]);
 
   const handleFavorite = async (e, gyodokId) => {
     e.stopPropagation();
@@ -90,26 +90,11 @@ useEffect(() => {
     });
 
   return (
-    <div className="page">
+    <div className="page" style={{ position: 'relative' }}>
       <TopBar
         title="교독"
         notificationCount={pendingInvites.length}
         onNotificationClick={() => setShowNotification(true)}
-        right={
-          user?.isAdmin || user?.is_admin ? (
-            <button
-              onClick={() => navigate('/admin/create')}
-              style={{
-                padding: '5px 12px', borderRadius: 'var(--radius-full)',
-                background: 'var(--accent-primary)', border: 'none',
-                fontSize: 12, color: '#fff', fontWeight: 500,
-                cursor: 'pointer', fontFamily: 'var(--font-sans)',
-              }}
-            >
-              + 교독 생성
-            </button>
-          ) : null
-        }
       />
 
       {/* 초대 배너 */}
@@ -161,10 +146,11 @@ useEffect(() => {
         ))}
       </div>
 
-      <div style={{ padding: '0 14px' }}>
+      {/* 리스트 */}
+      <div style={{ padding: '0 14px 80px' }}>
         {loading && <Spinner />}
         {!loading && filtered.length === 0 && (
-          <EmptyState message="교독 모임이 없습니다" sub={tab === 'all' ? '관리자가 모임을 생성하면 여기에 표시됩니다' : ''} />
+          <EmptyState message="교독 모임이 없습니다" sub={tab === 'all' ? '+ 버튼을 눌러 새 교독을 만들어 보세요' : ''} />
         )}
         {filtered.map(g => (
           <GyodokCard
@@ -177,6 +163,31 @@ useEffect(() => {
           />
         ))}
       </div>
+
+      {/* FAB — 교독 생성 (모든 유저) */}
+      <button
+        onClick={() => navigate('/admin/create')}
+        style={{
+          position: 'fixed',
+          bottom: 'calc(var(--bottom-nav-height, 56px) + 16px)',
+          right: '50%',
+          transform: 'translateX(calc(50% - 16px))',
+          // 앱 최대 너비 기준 우측 정렬
+          marginRight: 'max(calc((100vw - var(--app-width, 430px)) / 2), 0px)',
+          width: 48, height: 48,
+          borderRadius: '50%',
+          background: 'var(--accent-primary)',
+          border: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 3px 10px rgba(0,0,0,0.18)',
+          zIndex: 100,
+        }}
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 3v14M3 10h14" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/>
+        </svg>
+      </button>
 
       <BottomNav />
 
@@ -221,7 +232,6 @@ function GyodokCard({ gyodok, books, isFav, onFavorite, onClick }) {
         boxShadow: 'var(--shadow-card)',
       }}
     >
-      {/* 책 콜라주 */}
       {(() => {
         const W = 90; const H = 78; const bookW = 56;
         const offset = n === 1 ? 0 : (W - bookW) / (n - 1);
@@ -229,13 +239,10 @@ function GyodokCard({ gyodok, books, isFav, onFavorite, onClick }) {
           <div style={{ width: W, height: H, flexShrink: 0, position: 'relative' }}>
             {Array.from({ length: n }, (_, i) => (
               <div key={i} style={{
-                position: 'absolute',
-                left: i * offset, top: 0,
-                width: bookW, height: H,
-                borderRadius: 5,
+                position: 'absolute', left: i * offset, top: 0,
+                width: bookW, height: H, borderRadius: 5,
                 background: covers[i]?.coverUrl ? 'transparent' : collageColors[i % collageColors.length],
-                boxShadow: '2px 2px 4px rgba(0,0,0,0.1)',
-                overflow: 'hidden',
+                boxShadow: '2px 2px 4px rgba(0,0,0,0.1)', overflow: 'hidden',
               }}>
                 {covers[i]?.coverUrl && (
                   <img src={covers[i].coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -246,7 +253,6 @@ function GyodokCard({ gyodok, books, isFav, onFavorite, onClick }) {
         );
       })()}
 
-      {/* 정보 */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
           <Pill variant={pill.variant}>{pill.label}</Pill>
@@ -281,7 +287,6 @@ function GyodokCard({ gyodok, books, isFav, onFavorite, onClick }) {
         )}
       </div>
 
-      {/* 즐겨찾기 별표 */}
       <button
         onClick={onFavorite}
         style={{
