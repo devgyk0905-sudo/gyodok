@@ -239,7 +239,9 @@ function BookSearchSheet({ onClose, userId, onAddWish }) {
   const handleAddWish = async (book) => {
     try {
       const added = await addToWishlist({ userId, ...book });
-      onAddWish({ id: added.id, ...book });
+      if (added) {
+        onAddWish({ id: added.id, ...book });
+      }
     } catch (e) { console.error(e); }
   };
 

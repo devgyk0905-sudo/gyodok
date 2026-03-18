@@ -26,8 +26,14 @@ export default function GyodokDetailPage() {
   const [selectedBook,   setSelectedBook]   = useState(null);
   const [userMap,        setUserMap]        = useState({});
   const [showBookSearch, setShowBookSearch] = useState(false);
+  const [toast,          setToast]          = useState('');
 
   const isAdmin = user?.isAdmin || user?.is_admin;
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2800);
+  };
 
   const load = useCallback(async () => {
     try {
@@ -69,6 +75,12 @@ export default function GyodokDetailPage() {
   };
 
   const handleAddBook = async (bookData) => {
+    // 이미 1차 책이 있으면 막기
+    const myBook = books.find(b => b.ownerId === user.id && b.round === 1);
+    if (myBook) {
+      showToast('등록한 책을 먼저 삭제 후 추가해 주세요');
+      return;
+    }
     try {
       await addBook(id, {
         ownerId: user.id,
@@ -104,6 +116,12 @@ export default function GyodokDetailPage() {
     (gyodok.participantIds || []).map(uid => ({ id: uid })),
     books, allStatuses, totalRounds
   );
+
+  // 본인을 맨 위로 정렬
+  const sortedParticipants = [
+    ...(gyodok.participantIds || []).filter(pid => pid === user?.id),
+    ...(gyodok.participantIds || []).filter(pid => pid !== user?.id),
+  ];
 
   return (
     <div className="page">
@@ -173,15 +191,15 @@ export default function GyodokDetailPage() {
         <Divider />
         <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 500, marginBottom: 10 }}>진행 현황</div>
 
-        {(gyodok.participantIds || []).length === 0 && <EmptyState message="참여자가 없습니다" />}
+        {sortedParticipants.length === 0 && <EmptyState message="참여자가 없습니다" />}
 
-        {(gyodok.participantIds || []).map((pid, pidIdx) => {
+        {sortedParticipants.map((pid, pidIdx) => {
           const isMe       = pid === user?.id;
-          const isLast     = pidIdx === gyodok.participantIds.length - 1;
+          const isLast     = pidIdx === sortedParticipants.length - 1;
           const memberName = userMap[pid]?.name || pid;
           const myBooks    = Array.from({ length: totalRounds }, (_, i) => {
             const round = i + 1;
-            return books.find(b => b.round === round && b.exchangeOrder?.includes(pid)) || null;
+            return books.find(b => b.round === round && b.ownerId === pid) || null;
           });
 
           return (
@@ -223,6 +241,19 @@ export default function GyodokDetailPage() {
 
       <BottomNav />
 
+      {/* 플로팅 토스트 */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(40,35,28,0.88)', color: '#fff',
+          padding: '10px 20px', borderRadius: 20,
+          fontSize: 12, whiteSpace: 'nowrap',
+          zIndex: 400, animation: 'fadeIn 0.2s ease',
+        }}>
+          {toast}
+        </div>
+      )}
+
       {selectedBook && (
         <BookFullSheet
           book={selectedBook}
@@ -242,7 +273,12 @@ export default function GyodokDetailPage() {
         <BookSearchSheet
           onClose={() => setShowBookSearch(false)}
           onAddBook={handleAddBook}
-          onAddWish={(book) => addToWishlist({ userId: user?.id, ...book })}
+          onAddWish={async (book) => {
+            try {
+              await addToWishlist({ userId: user?.id, ...book });
+              showToast('위시리스트에 추가했습니다');
+            } catch (e) { console.error(e); }
+          }}
         />
       )}
     </div>
@@ -279,25 +315,19 @@ function BookStatusBadge({ round, currentRound, status }) {
 }
 
 function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, isAdmin, onClose, onStatusChange, onDeleteBook, userMap }) {
-  const isMyBook   = ownerUserId === currentUserId;
-  const canDelete  = isMyBook || isAdmin;
+  const isMyBook  = ownerUserId === currentUserId;
+  const canDelete = isMyBook || isAdmin;
 
   return (
-    <div
-      style={{
-        position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
-        width: '100%', maxWidth: 'var(--app-width)',
-        bottom: 0, zIndex: 200,
-        background: 'rgba(0,0,0,0.28)', display: 'flex', flexDirection: 'column',
-      }}
-      onClick={onClose}
-    >
+    <div style={{
+      position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
+      width: '100%', maxWidth: 'var(--app-width)',
+      bottom: 0, zIndex: 200,
+      background: 'rgba(0,0,0,0.28)', display: 'flex', flexDirection: 'column',
+    }} onClick={onClose}>
       <div style={{ height: 52, flexShrink: 0 }} />
-      <div
-        className="slide-up"
-        onClick={e => e.stopPropagation()}
-        style={{ flex: 1, background: 'var(--bg-surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-      >
+      <div className="slide-up" onClick={e => e.stopPropagation()}
+        style={{ flex: 1, background: 'var(--bg-surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{
           padding: '12px 14px 10px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -310,9 +340,7 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, is
             </svg>
           </button>
         </div>
-
         <div style={{ flex: 1, overflowY: 'auto', padding: '13px 14px 20px' }}>
-          {/* 도서 정보 */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'flex-start' }}>
             <div style={{ width: 58, height: 78, borderRadius: 7, background: 'var(--accent-green)', flexShrink: 0, overflow: 'hidden' }}>
               {book.coverUrl && <img src={book.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
@@ -334,8 +362,6 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, is
             </div>
           </div>
           <Divider />
-
-          {/* 상태 변경 */}
           {isMyBook ? (
             <>
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 6 }}>
@@ -371,10 +397,7 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, is
               </div>
             </>
           )}
-
           <Divider />
-
-          {/* 책 주인 */}
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 6 }}>책 주인</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <ProfileCircle name={ownerName} isMe={ownerUserId === currentUserId} size={24} />
@@ -382,8 +405,6 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, is
               {ownerUserId === currentUserId ? `${ownerName} (나)` : ownerName}
             </span>
           </div>
-
-          {/* 교환 순서 */}
           {book.exchangeOrder?.length > 0 && (
             <>
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 8 }}>교환 순서</div>
@@ -391,12 +412,8 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, is
                 {book.exchangeOrder.map((uid, i) => (
                   <React.Fragment key={uid}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                      <ProfileCircle
-                        name={userMap[uid]?.name || uid}
-                        isMe={uid === currentUserId}
-                        size={26}
-                        style={uid === currentUserId ? { outline: '2px solid var(--accent-primary)', outlineOffset: 1 } : {}}
-                      />
+                      <ProfileCircle name={userMap[uid]?.name || uid} isMe={uid === currentUserId} size={26}
+                        style={uid === currentUserId ? { outline: '2px solid var(--accent-primary)', outlineOffset: 1 } : {}} />
                       <span style={{ fontSize: 9, color: 'var(--text-tertiary)' }}>
                         {userMap[uid]?.name || uid.slice(0, 6)}
                       </span>
@@ -410,8 +427,6 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, is
               <Divider />
             </>
           )}
-
-          {/* 책 소개 */}
           {book.description && (
             <>
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 5 }}>책 소개</div>
@@ -420,20 +435,15 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName, is
               </div>
             </>
           )}
-
-          {/* 책 삭제 버튼 */}
           {canDelete && (
             <>
               <Divider />
-              <button
-                onClick={onDeleteBook}
-                style={{
-                  width: '100%', height: 40, borderRadius: 'var(--radius-md)',
-                  background: 'transparent', border: '0.5px solid #c87070',
-                  fontSize: 13, color: '#c87070',
-                  cursor: 'pointer', fontFamily: 'var(--font-sans)', marginTop: 8,
-                }}
-              >
+              <button onClick={onDeleteBook} style={{
+                width: '100%', height: 40, borderRadius: 'var(--radius-md)',
+                background: 'transparent', border: '0.5px solid #c87070',
+                fontSize: 13, color: '#c87070',
+                cursor: 'pointer', fontFamily: 'var(--font-sans)', marginTop: 8,
+              }}>
                 {isAdmin && !isMyBook ? '책 삭제하기 (관리자)' : '책 삭제하기'}
               </button>
             </>
@@ -458,21 +468,15 @@ function BookSearchSheet({ onClose, onAddBook, onAddWish }) {
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
-        width: '100%', maxWidth: 'var(--app-width)',
-        bottom: 0, zIndex: 200,
-        background: 'rgba(0,0,0,0.28)', display: 'flex', flexDirection: 'column',
-      }}
-      onClick={onClose}
-    >
+    <div style={{
+      position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
+      width: '100%', maxWidth: 'var(--app-width)',
+      bottom: 0, zIndex: 200,
+      background: 'rgba(0,0,0,0.28)', display: 'flex', flexDirection: 'column',
+    }} onClick={onClose}>
       <div style={{ height: 52, flexShrink: 0 }} />
-      <div
-        className="slide-up"
-        onClick={e => e.stopPropagation()}
-        style={{ flex: 1, background: 'var(--bg-surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-      >
+      <div className="slide-up" onClick={e => e.stopPropagation()}
+        style={{ flex: 1, background: 'var(--bg-surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{
           padding: '12px 14px 10px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -485,12 +489,9 @@ function BookSearchSheet({ onClose, onAddBook, onAddWish }) {
             </svg>
           </button>
         </div>
-
         <div style={{ flex: 1, overflowY: 'auto', padding: '13px 14px' }}>
           <div style={{ display: 'flex', gap: 7, marginBottom: 14 }}>
-            <input
-              type="text"
-              value={query}
+            <input type="text" value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder="책 제목/저자/출판사 검색"
@@ -512,15 +513,10 @@ function BookSearchSheet({ onClose, onAddBook, onAddWish }) {
               </svg>
             </button>
           </div>
-
           {loading && <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: 20 }}>검색 중...</div>}
-
           {results.length > 0 && (
-            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginBottom: 8 }}>
-              검색 결과 {results.length}건
-            </div>
+            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginBottom: 8 }}>검색 결과 {results.length}건</div>
           )}
-
           {results.map((book, i) => (
             <div key={book.isbn || i} style={{
               display: 'flex', gap: 10, padding: '10px 0',
