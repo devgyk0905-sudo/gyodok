@@ -91,8 +91,22 @@ export const getBooks = async (gyodokId) => {
 };
 
 export const addBook = async (gyodokId, fields) => {
+  const payload = {
+    gyodok_id:      gyodokId,
+    owner_id:       fields.ownerId,
+    round:          fields.round || 1,
+    exchange_order: fields.exchangeOrder || [],
+    isbn:           fields.isbn || '',
+    title:          fields.title || '',
+    author:         fields.author || '',
+    publisher:      fields.publisher || '',
+    publish_date:   fields.publishDate || '',
+    cover_url:      fields.coverUrl || '',
+    description:    fields.description || '',
+    price:          fields.price || 0,
+  };
   const { data, error } = await supabase
-    .from('books').insert({ ...snakeCase(fields), gyodok_id: gyodokId }).select().single();
+    .from('books').insert(payload).select().single();
   if (error) throw error;
   return camelCase(data);
 };
