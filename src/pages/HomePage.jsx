@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import TopBar from '../components/layout/TopBar';
 import BottomNav from '../components/layout/BottomNav';
+import NotificationModal from '../components/common/NotificationModal';
 import {
   Card, SectionHeader, Pill, Divider, Spinner, EmptyState,
   ProfileCircle, BookCover, StatusButton,
@@ -10,6 +11,7 @@ import {
 import {
   getGyodoks, getBooks, getBookStatus, updateBookStatus,
   getWishlist, getFeed, addFeedItem, getAllUsers, getFavorites,
+  getPendingInvites,
 } from '../supabase/db';
 import {
   calcGyodokStatus, getMyStatusText, getMemberStatus,
@@ -20,13 +22,15 @@ export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [favGyodoks,   setFavGyodoks]   = useState([]);  // 즐찾 교독 상세 배열
-  const [favBooks,     setFavBooks]     = useState({});  // gyodokId → books
-  const [favStatuses,  setFavStatuses]  = useState({});  // gyodokId → statusMap
-  const [userMap,      setUserMap]      = useState({});
-  const [wishlist,     setWishlist]     = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [showProfileAlert, setShowProfileAlert] = useState(false);
+  const [favGyodoks,        setFavGyodoks]        = useState([]);
+  const [favBooks,          setFavBooks]          = useState({});
+  const [favStatuses,       setFavStatuses]        = useState({});
+  const [userMap,           setUserMap]           = useState({});
+  const [wishlist,          setWishlist]          = useState([]);
+  const [pendingInvites,    setPendingInvites]    = useState([]);
+  const [showNotification,  setShowNotification]  = useState(false);
+  const [loading,           setLoading]           = useState(true);
+  const [showProfileAlert,  setShowProfileAlert]  = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -39,26 +43,26 @@ export default function HomePage() {
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const [gyodoks, users, favs, wl] = await Promise.all([
+      const [gyodoks, users, favs, wl, invites] = await Promise.all([
         getGyodoks(user.id),
         getAllUsers(),
         getFavorites(user.id),
         getWishlist(user.id),
+        getPendingInvites(user.id),
       ]);
 
       const map = {};
       users.forEach(u => { map[u.id] = u; });
       setUserMap(map);
       setWishlist(wl);
+      setPendingInvites(invites);
 
-      // 즐겨찾기 순서대로 교독 목록 구성 (최대 3개)
       const favList = favs
         .map(f => gyodoks.find(g => g.id === f.gyodokId))
         .filter(Boolean)
         .slice(0, 3);
       setFavGyodoks(favList);
 
-      // 즐겨찾기 교독별 책 + 상태 로드
       const booksMap = {};
       const statusesMap = {};
       for (const g of favList) {
@@ -122,7 +126,11 @@ export default function HomePage() {
 
   return (
     <div className="page">
-      <TopBar title="홈" />
+      <TopBar
+        title="홈"
+        notificationCount={pendingInvites.length}
+        onNotificationClick={() => setShowNotification(true)}
+      />
 
       {/* 프로필 미완성 팝업 */}
       {showProfileAlert && (
@@ -165,7 +173,36 @@ export default function HomePage() {
 
       <div className="page-content fade-in">
 
-        {/* ── 즐겨찾기 없을 때 ── */}
+        {/* 초대 배너 */}
+        {pendingInvites.length > 0 && (
+          <div
+            onClick={() => setShowNotification(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: 'var(--accent-amber)', borderRadius: 'var(--radius-md)',
+              padding: '10px 14px', marginBottom: 14, cursor: 'pointer',
+              border: '0.5px solid var(--border-strong)',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M9 2a5.5 5.5 0 00-5.5 5.5v2.8L2 12.5h14l-1.5-2.2V7.5A5.5 5.5 0 009 2z" stroke="var(--accent-amber-text)" strokeWidth="1.3" strokeLinecap="round"/>
+              <path d="M7 14.5a2 2 0 004 0" stroke="var(--accent-amber-text)" strokeWidth="1.3"/>
+            </svg>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--accent-amber-text)' }}>
+                교독 초대 {pendingInvites.length}건
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--accent-amber-text)', opacity: 0.8, marginLeft: 6 }}>
+                탭하여 확인하세요
+              </span>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M5 3l4 4-4 4" stroke="var(--accent-amber-text)" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+          </div>
+        )}
+
+        {/* 즐겨찾기 없을 때 */}
         {favGyodoks.length === 0 && (
           <div style={{
             background: 'var(--bg-surface-secondary)',
@@ -181,7 +218,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ── 즐겨찾기 교독 세트 (D-day + 내 상태 + 독서 현황) ── */}
+        {/* 즐겨찾기 교독 세트 */}
         {favGyodoks.map(g => {
           const bks = favBooks[g.id] || [];
           const sm  = favStatuses[g.id] || {};
@@ -205,8 +242,6 @@ export default function HomePage() {
               overflow: 'hidden',
               boxShadow: 'var(--shadow-card)',
             }}>
-
-              {/* D-day 카드 */}
               <div
                 onClick={() => navigate(`/gyodok/${g.id}`)}
                 style={{
@@ -238,7 +273,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* 내 상태 */}
               <div style={{ padding: '14px 16px', borderTop: '0.5px solid var(--border-default)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>내 상태</div>
@@ -266,7 +300,6 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* 독서 현황 */}
               {(g.participantIds || []).length > 0 && (
                 <div style={{ padding: '14px 16px', borderTop: '0.5px solid var(--border-default)' }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>독서 현황</div>
@@ -289,7 +322,7 @@ export default function HomePage() {
           );
         })}
 
-        {/* ── 위시리스트 ── */}
+        {/* 위시리스트 */}
         <SectionHeader>내 다음 책 후보</SectionHeader>
         <Card style={{ padding: '8px 12px' }}>
           {wishlist.length === 0 ? (
@@ -309,12 +342,24 @@ export default function HomePage() {
 
         <div style={{ height: 16 }} />
       </div>
+
       <BottomNav />
+
+      {/* 알림 모달 */}
+      {showNotification && (
+        <NotificationModal
+          invites={pendingInvites}
+          userId={user.id}
+          onClose={() => setShowNotification(false)}
+          onUpdate={() => {
+            setShowNotification(false);
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 }
-
-/* ── 서브 컴포넌트 ── */
 
 function MyBooksRow({ books, currentRound, userId, totalRounds }) {
   return (

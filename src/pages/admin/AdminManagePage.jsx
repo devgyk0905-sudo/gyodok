@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getGyodok, updateGyodok, getAllUsers, deleteGyodok } from '../../supabase/db';
+import { getGyodok, updateGyodok, getAllUsers, deleteGyodok, inviteUser, cancelInvite } from '../../supabase/db';
 import TopBar from '../../components/layout/TopBar';
 import { Divider } from '../../components/common';
 
@@ -13,13 +13,6 @@ const STATUS_OPTIONS = [
 export default function AdminManagePage() {
   const { id }   = useParams();
   const navigate = useNavigate();
-  const handleDelete = async () => {
-    if (!window.confirm('교독을 삭제하면 연결된 모든 책과 기록이 삭제됩니다.\n정말 삭제하시겠습니까?')) return;
-    try {
-     await deleteGyodok(id);
-     navigate('/gyodok', { replace: true });
-    } catch (e) { console.error(e); alert('삭제 중 오류가 발생했습니다.'); }
-  };
 
   const [gyodok,      setGyodok]      = useState(null);
   const [allUsers,    setAllUsers]    = useState([]);
@@ -28,9 +21,14 @@ export default function AdminManagePage() {
   const [startDate,   setStartDate]   = useState('');
   const [endDate,     setEndDate]     = useState('');
   const [editableIds, setEditableIds] = useState([]);
-  const [checkpoints, setCheckpoints] = useState([]);  // D-day 체크포인트
+  const [checkpoints, setCheckpoints] = useState([]);
   const [saving,      setSaving]      = useState(false);
   const [loading,     setLoading]     = useState(true);
+
+  // 초대 관련 state
+  const [participantIds, setParticipantIds] = useState([]);
+  const [pendingIds,     setPendingIds]     = useState([]);
+  const [inviting,       setInviting]       = useState(null); // userId
 
   useEffect(() => {
     Promise.all([getGyodok(id), getAllUsers()])
@@ -43,25 +41,45 @@ export default function AdminManagePage() {
           setEndDate(g.endDate ? toInputDate(g.endDate) : '');
           setEditableIds(g.editableIds || []);
           setCheckpoints(g.checkpoints || []);
+          setParticipantIds(g.participantIds || []);
+          setPendingIds(g.pendingIds || []);
         }
-        setAllUsers(users.filter(u => g?.participantIds?.includes(u.id)));
+        setAllUsers(users);
       }).finally(() => setLoading(false));
   }, [id]);
 
   const toggleEditable = (uid) =>
     setEditableIds(prev => prev.includes(uid) ? prev.filter(i => i !== uid) : [...prev, uid]);
 
-  // 체크포인트 추가
   const addCheckpoint = () =>
     setCheckpoints(prev => [...prev, { id: Date.now(), label: '', date: '' }]);
 
-  // 체크포인트 수정
   const updateCheckpoint = (idx, field, value) =>
     setCheckpoints(prev => prev.map((cp, i) => i === idx ? { ...cp, [field]: value } : cp));
 
-  // 체크포인트 삭제
   const removeCheckpoint = (idx) =>
     setCheckpoints(prev => prev.filter((_, i) => i !== idx));
+
+  const handleInvite = async (userId) => {
+    setInviting(userId);
+    try {
+      await inviteUser(id, userId);
+      setPendingIds(prev => [...prev, userId]);
+    } catch (e) {
+      if (e.message === 'ALREADY_PARTICIPANT') alert('이미 참여 중인 사용자입니다.');
+      else if (e.message === 'ALREADY_INVITED') alert('이미 초대된 사용자입니다.');
+      else console.error(e);
+    } finally { setInviting(null); }
+  };
+
+  const handleCancelInvite = async (userId) => {
+    setInviting(userId);
+    try {
+      await cancelInvite(id, userId);
+      setPendingIds(prev => prev.filter(id => id !== userId));
+    } catch (e) { console.error(e); }
+    finally { setInviting(null); }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -79,7 +97,22 @@ export default function AdminManagePage() {
     finally { setSaving(false); }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('교독을 삭제하면 연결된 모든 책과 기록이 삭제됩니다.\n정말 삭제하시겠습니까?')) return;
+    try {
+      await deleteGyodok(id);
+      navigate('/gyodok', { replace: true });
+    } catch (e) { console.error(e); alert('삭제 중 오류가 발생했습니다.'); }
+  };
+
   if (loading) return <div className="page"><TopBar title="교독 관리" showBack /></div>;
+
+  // 초대 가능한 유저: 참여자도 아니고 pending도 아닌 사람
+  const invitableUsers = allUsers.filter(
+    u => !participantIds.includes(u.id) && !pendingIds.includes(u.id)
+  );
+  const pendingUsers    = allUsers.filter(u => pendingIds.includes(u.id));
+  const participantUsers = allUsers.filter(u => participantIds.includes(u.id));
 
   return (
     <div className="page">
@@ -151,8 +184,7 @@ export default function AdminManagePage() {
         {checkpoints.map((cp, idx) => (
           <div key={cp.id || idx} style={{
             background: 'var(--bg-surface)', borderRadius: 'var(--radius-sm)',
-            border: '0.5px solid var(--border-default)', padding: '10px 12px',
-            marginBottom: 8,
+            border: '0.5px solid var(--border-default)', padding: '10px 12px', marginBottom: 8,
           }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: 7 }}>
               <input
@@ -182,10 +214,88 @@ export default function AdminManagePage() {
 
         <Divider style={{ marginTop: 6, marginBottom: 14 }} />
 
+        {/* 참여자 초대 */}
+        <SectionLabel>참여자 초대</SectionLabel>
+
+        {/* 대기 중인 초대 */}
+        {pendingUsers.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 6 }}>수락 대기 중</div>
+            {pendingUsers.map(u => (
+              <div key={u.id} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '8px 11px', background: 'var(--bg-surface)',
+                borderRadius: 'var(--radius-sm)', border: '0.5px solid var(--accent-amber)',
+                marginBottom: 6,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--accent-amber)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--accent-amber-text)', fontWeight: 500 }}>
+                    {u.name?.charAt(0)}
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{u.name}</span>
+                  <span style={{ fontSize: 10, color: 'var(--accent-amber-text)', background: 'var(--accent-amber)', padding: '1px 6px', borderRadius: 'var(--radius-full)' }}>대기 중</span>
+                </div>
+                <button
+                  onClick={() => handleCancelInvite(u.id)}
+                  disabled={inviting === u.id}
+                  style={{
+                    padding: '4px 10px', borderRadius: 'var(--radius-full)',
+                    background: 'transparent', border: '0.5px solid var(--border-input)',
+                    fontSize: 11, color: 'var(--text-tertiary)',
+                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  취소
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 초대 가능한 유저 목록 */}
+        {invitableUsers.length > 0 ? (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 6 }}>초대 가능</div>
+            {invitableUsers.map(u => (
+              <div key={u.id} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '8px 11px', background: 'var(--bg-surface)',
+                borderRadius: 'var(--radius-sm)', border: '0.5px solid var(--border-default)',
+                marginBottom: 6,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--accent-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--accent-green-dark)', fontWeight: 500 }}>
+                    {u.name?.charAt(0)}
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{u.name}</span>
+                </div>
+                <button
+                  onClick={() => handleInvite(u.id)}
+                  disabled={inviting === u.id}
+                  style={{
+                    padding: '4px 10px', borderRadius: 'var(--radius-full)',
+                    background: 'var(--accent-primary)', border: 'none',
+                    fontSize: 11, color: '#fff', fontWeight: 500,
+                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  {inviting === u.id ? '...' : '초대'}
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: 'var(--text-hint)', textAlign: 'center', padding: '10px 0', marginBottom: 16 }}>
+            초대 가능한 사용자가 없습니다
+          </div>
+        )}
+
+        <Divider style={{ marginBottom: 14 }} />
+
         {/* 참여자 수정 권한 */}
         <SectionLabel>참여자 수정 권한</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
-          {allUsers.map(u => {
+          {participantUsers.map(u => {
             const on = editableIds.includes(u.id);
             return (
               <div key={u.id} style={{
@@ -211,6 +321,7 @@ export default function AdminManagePage() {
             );
           })}
         </div>
+
         <button onClick={handleSave} disabled={saving} style={{
           width: '100%', height: 44, borderRadius: 'var(--radius-md)',
           background: saving ? 'var(--border-strong)' : 'var(--accent-primary)',
@@ -221,17 +332,12 @@ export default function AdminManagePage() {
           {saving ? '저장 중...' : '저장하기'}
         </button>
 
-        <button
-          onClick={handleDelete}
-          style={{
-            width: '100%', height: 40, borderRadius: 'var(--radius-md)',
-            background: 'transparent',
-            border: '0.5px solid #c87070',
-            fontSize: 13, color: '#c87070',
-            cursor: 'pointer', fontFamily: 'var(--font-sans)',
-            marginTop: 8,
-          }}
-        >
+        <button onClick={handleDelete} style={{
+          width: '100%', height: 40, borderRadius: 'var(--radius-md)',
+          background: 'transparent', border: '0.5px solid #c87070',
+          fontSize: 13, color: '#c87070', cursor: 'pointer',
+          fontFamily: 'var(--font-sans)', marginTop: 8,
+        }}>
           교독 삭제하기
         </button>
 

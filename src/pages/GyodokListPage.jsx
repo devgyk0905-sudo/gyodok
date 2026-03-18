@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import TopBar from '../components/layout/TopBar';
 import BottomNav from '../components/layout/BottomNav';
+import NotificationModal from '../components/common/NotificationModal';
 import { Pill, Spinner, EmptyState } from '../components/common';
-import { getGyodoks, getFavorites, addFavorite, removeFavorite, getBooks } from '../supabase/db';
+import { getGyodoks, getFavorites, addFavorite, removeFavorite, getBooks, getPendingInvites } from '../supabase/db';
 
 const TABS = [
   { key: 'all',       label: '전체' },
@@ -25,19 +26,21 @@ export default function GyodokListPage() {
   const { user }  = useAuth();
   const navigate  = useNavigate();
 
-  const [tab,       setTab]       = useState('all');
-  const [list,      setList]      = useState([]);
-  const [booksMap,  setBooksMap]  = useState({});  // gyodokId → books
-  const [favIds,    setFavIds]    = useState([]);
-  const [loading,   setLoading]   = useState(true);
+  const [tab,              setTab]              = useState('all');
+  const [list,             setList]             = useState([]);
+  const [booksMap,         setBooksMap]         = useState({});
+  const [favIds,           setFavIds]           = useState([]);
+  const [pendingInvites,   setPendingInvites]   = useState([]);
+  const [showNotification, setShowNotification] = useState(false);
+  const [loading,          setLoading]          = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([getGyodoks(user.id), getFavorites(user.id)])
-      .then(async ([gyodoks, favs]) => {
+    Promise.all([getGyodoks(user.id), getFavorites(user.id), getPendingInvites(user.id)])
+      .then(async ([gyodoks, favs, invites]) => {
         setList(gyodoks);
         setFavIds(favs.map(f => f.gyodokId));
-        // 각 교독의 책 로드
+        setPendingInvites(invites);
         const map = {};
         await Promise.all(gyodoks.map(async g => {
           const bks = await getBooks(g.id);
@@ -52,7 +55,6 @@ export default function GyodokListPage() {
   const handleFavorite = async (e, gyodokId) => {
     e.stopPropagation();
     const isFav = favIds.includes(gyodokId);
-
     if (isFav) {
       await removeFavorite(user.id, gyodokId);
       setFavIds(prev => prev.filter(id => id !== gyodokId));
@@ -79,6 +81,8 @@ export default function GyodokListPage() {
     <div className="page">
       <TopBar
         title="교독"
+        notificationCount={pendingInvites.length}
+        onNotificationClick={() => setShowNotification(true)}
         right={
           user?.isAdmin || user?.is_admin ? (
             <button
@@ -95,6 +99,35 @@ export default function GyodokListPage() {
           ) : null
         }
       />
+
+      {/* 초대 배너 */}
+      {pendingInvites.length > 0 && (
+        <div
+          onClick={() => setShowNotification(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'var(--accent-amber)',
+            padding: '10px 14px', cursor: 'pointer',
+            borderBottom: '0.5px solid var(--border-strong)',
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 2a5.5 5.5 0 00-5.5 5.5v2.8L2 12.5h14l-1.5-2.2V7.5A5.5 5.5 0 009 2z" stroke="var(--accent-amber-text)" strokeWidth="1.3" strokeLinecap="round"/>
+            <path d="M7 14.5a2 2 0 004 0" stroke="var(--accent-amber-text)" strokeWidth="1.3"/>
+          </svg>
+          <div style={{ flex: 1 }}>
+            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--accent-amber-text)' }}>
+              교독 초대 {pendingInvites.length}건
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--accent-amber-text)', opacity: 0.8, marginLeft: 6 }}>
+              탭하여 확인하세요
+            </span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M5 3l4 4-4 4" stroke="var(--accent-amber-text)" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        </div>
+      )}
 
       {/* 탭 필터 */}
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '10px 14px', scrollbarWidth: 'none' }}>
@@ -134,6 +167,26 @@ export default function GyodokListPage() {
       </div>
 
       <BottomNav />
+
+      {/* 알림 모달 */}
+      {showNotification && (
+        <NotificationModal
+          invites={pendingInvites}
+          userId={user.id}
+          onClose={() => setShowNotification(false)}
+          onUpdate={async () => {
+            setShowNotification(false);
+            const [gyodoks, favs, invites] = await Promise.all([
+              getGyodoks(user.id),
+              getFavorites(user.id),
+              getPendingInvites(user.id),
+            ]);
+            setList(gyodoks);
+            setFavIds(favs.map(f => f.gyodokId));
+            setPendingInvites(invites);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -222,8 +275,7 @@ function GyodokCard({ gyodok, books, isFav, onFavorite, onClick }) {
         style={{
           flexShrink: 0, width: 32, height: 32,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'none', border: 'none', cursor: 'pointer',
-          padding: 4,
+          background: 'none', border: 'none', cursor: 'pointer', padding: 4,
         }}
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -231,9 +283,7 @@ function GyodokCard({ gyodok, books, isFav, onFavorite, onClick }) {
             d="M9 1.5l2.09 4.26 4.71.68-3.4 3.32.8 4.69L9 12l-4.2 2.45.8-4.69-3.4-3.32 4.71-.68z"
             fill={isFav ? '#d4a373' : 'none'}
             stroke={isFav ? '#d4a373' : 'var(--text-tertiary)'}
-            strokeWidth="1.3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"
           />
         </svg>
       </button>

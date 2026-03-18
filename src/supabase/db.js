@@ -92,7 +92,6 @@ export const deleteGyodok = async (gyodokId) => {
 // ===== 교독 나가기 =====
 
 export const leaveGyodok = async (gyodokId, userId, gyodokStarted) => {
-  // 1. participantIds에서 제거
   const { data: gyodok, error: fetchErr } = await supabase
     .from('gyodoks').select('participant_ids').eq('id', gyodokId).single();
   if (fetchErr) throw fetchErr;
@@ -102,7 +101,6 @@ export const leaveGyodok = async (gyodokId, userId, gyodokStarted) => {
     .from('gyodoks').update({ participant_ids: newIds }).eq('id', gyodokId);
   if (updateErr) throw updateErr;
 
-  // 2. 교독 시작 전이면 book_statuses 삭제, 시작 후면 유지
   if (!gyodokStarted) {
     const { data: books } = await supabase
       .from('books').select('id').eq('gyodok_id', gyodokId);
@@ -114,6 +112,78 @@ export const leaveGyodok = async (gyodokId, userId, gyodokStarted) => {
         .eq('user_id', userId);
     }
   }
+};
+
+// ===== 초대 =====
+
+// 특정 유저를 교독에 초대 (pending_ids에 추가)
+export const inviteUser = async (gyodokId, userId) => {
+  const { data: gyodok, error: fetchErr } = await supabase
+    .from('gyodoks').select('participant_ids, pending_ids').eq('id', gyodokId).single();
+  if (fetchErr) throw fetchErr;
+
+  const participantIds = gyodok.participant_ids || [];
+  const pendingIds     = gyodok.pending_ids     || [];
+
+  if (participantIds.includes(userId)) throw new Error('ALREADY_PARTICIPANT');
+  if (pendingIds.includes(userId))     throw new Error('ALREADY_INVITED');
+
+  const { error } = await supabase
+    .from('gyodoks')
+    .update({ pending_ids: [...pendingIds, userId] })
+    .eq('id', gyodokId);
+  if (error) throw error;
+};
+
+// 초대 취소 (pending_ids에서 제거)
+export const cancelInvite = async (gyodokId, userId) => {
+  const { data: gyodok, error: fetchErr } = await supabase
+    .from('gyodoks').select('pending_ids').eq('id', gyodokId).single();
+  if (fetchErr) throw fetchErr;
+
+  const newPending = (gyodok.pending_ids || []).filter(id => id !== userId);
+  const { error } = await supabase
+    .from('gyodoks').update({ pending_ids: newPending }).eq('id', gyodokId);
+  if (error) throw error;
+};
+
+// 초대 수락: pending_ids → participant_ids 이동
+export const acceptInvite = async (gyodokId, userId) => {
+  const { data: gyodok, error: fetchErr } = await supabase
+    .from('gyodoks').select('participant_ids, pending_ids').eq('id', gyodokId).single();
+  if (fetchErr) throw fetchErr;
+
+  const newParticipants = [...(gyodok.participant_ids || []), userId];
+  const newPending      = (gyodok.pending_ids || []).filter(id => id !== userId);
+
+  const { error } = await supabase
+    .from('gyodoks').update({
+      participant_ids: newParticipants,
+      pending_ids:     newPending,
+    }).eq('id', gyodokId);
+  if (error) throw error;
+};
+
+// 초대 거절: pending_ids에서만 제거
+export const declineInvite = async (gyodokId, userId) => {
+  const { data: gyodok, error: fetchErr } = await supabase
+    .from('gyodoks').select('pending_ids').eq('id', gyodokId).single();
+  if (fetchErr) throw fetchErr;
+
+  const newPending = (gyodok.pending_ids || []).filter(id => id !== userId);
+  const { error } = await supabase
+    .from('gyodoks').update({ pending_ids: newPending }).eq('id', gyodokId);
+  if (error) throw error;
+};
+
+// 내가 초대받은 교독 목록 조회
+export const getPendingInvites = async (userId) => {
+  const { data, error } = await supabase
+    .from('gyodoks')
+    .select('*')
+    .contains('pending_ids', [userId]);
+  if (error) throw error;
+  return (data || []).map(camelCase);
 };
 
 // ===== 책 =====
