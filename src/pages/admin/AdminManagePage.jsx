@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getGyodok, updateGyodok, getAllUsers, deleteGyodok, inviteUser, cancelInvite } from '../../supabase/db';
+import {
+  getGyodok, updateGyodok, getAllUsers, deleteGyodok,
+  inviteUser, cancelInvite, leaveGyodok,
+} from '../../supabase/db';
 import TopBar from '../../components/layout/TopBar';
 import { Divider } from '../../components/common';
 
@@ -14,21 +17,21 @@ export default function AdminManagePage() {
   const { id }   = useParams();
   const navigate = useNavigate();
 
-  const [gyodok,      setGyodok]      = useState(null);
-  const [allUsers,    setAllUsers]    = useState([]);
-  const [status,      setStatus]      = useState('active');
-  const [title,       setTitle]       = useState('');
-  const [startDate,   setStartDate]   = useState('');
-  const [endDate,     setEndDate]     = useState('');
-  const [editableIds, setEditableIds] = useState([]);
-  const [checkpoints, setCheckpoints] = useState([]);
-  const [saving,      setSaving]      = useState(false);
-  const [loading,     setLoading]     = useState(true);
+  const [gyodok,         setGyodok]         = useState(null);
+  const [allUsers,       setAllUsers]       = useState([]);
+  const [status,         setStatus]         = useState('active');
+  const [title,          setTitle]          = useState('');
+  const [startDate,      setStartDate]      = useState('');
+  const [endDate,        setEndDate]        = useState('');
+  const [editableIds,    setEditableIds]    = useState([]);
+  const [checkpoints,    setCheckpoints]    = useState([]);
+  const [saving,         setSaving]         = useState(false);
+  const [loading,        setLoading]        = useState(true);
 
-  // 초대 관련 state
   const [participantIds, setParticipantIds] = useState([]);
   const [pendingIds,     setPendingIds]     = useState([]);
-  const [inviting,       setInviting]       = useState(null); // userId
+  const [inviting,       setInviting]       = useState(null);
+  const [kicking,        setKicking]        = useState(null);
 
   useEffect(() => {
     Promise.all([getGyodok(id), getAllUsers()])
@@ -76,9 +79,23 @@ export default function AdminManagePage() {
     setInviting(userId);
     try {
       await cancelInvite(id, userId);
-      setPendingIds(prev => prev.filter(id => id !== userId));
+      setPendingIds(prev => prev.filter(pid => pid !== userId));
     } catch (e) { console.error(e); }
     finally { setInviting(null); }
+  };
+
+  const handleKick = async (userId) => {
+    const userName = allUsers.find(u => u.id === userId)?.name || '이 참여자';
+    if (!window.confirm(`${userName}님을 교독에서 내보내시겠습니까?`)) return;
+    setKicking(userId);
+    try {
+      // 교독이 시작된 경우(books 있음) statuses 유지, 아니면 삭제
+      // leaveGyodok 재사용 — gyodokStarted는 관리자가 판단하기 어려우므로 true로 처리 (statuses 유지)
+      await leaveGyodok(id, userId, true);
+      setParticipantIds(prev => prev.filter(pid => pid !== userId));
+      setEditableIds(prev => prev.filter(eid => eid !== userId));
+    } catch (e) { console.error(e); }
+    finally { setKicking(null); }
   };
 
   const handleSave = async () => {
@@ -107,10 +124,7 @@ export default function AdminManagePage() {
 
   if (loading) return <div className="page"><TopBar title="교독 관리" showBack /></div>;
 
-  // 초대 가능한 유저: 참여자도 아니고 pending도 아닌 사람
-  const invitableUsers = allUsers.filter(
-    u => !participantIds.includes(u.id) && !pendingIds.includes(u.id)
-  );
+  const invitableUsers  = allUsers.filter(u => !participantIds.includes(u.id) && !pendingIds.includes(u.id));
   const pendingUsers    = allUsers.filter(u => pendingIds.includes(u.id));
   const participantUsers = allUsers.filter(u => participantIds.includes(u.id));
 
@@ -252,7 +266,7 @@ export default function AdminManagePage() {
           </div>
         )}
 
-        {/* 초대 가능한 유저 목록 */}
+        {/* 초대 가능한 유저 */}
         {invitableUsers.length > 0 ? (
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 10, color: 'var(--text-hint)', marginBottom: 6 }}>초대 가능</div>
@@ -292,31 +306,62 @@ export default function AdminManagePage() {
 
         <Divider style={{ marginBottom: 14 }} />
 
-        {/* 참여자 수정 권한 */}
-        <SectionLabel>참여자 수정 권한</SectionLabel>
+        {/* 현재 참여자 — 수정 권한 + 추방 */}
+        <SectionLabel>현재 참여자</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
           {participantUsers.map(u => {
             const on = editableIds.includes(u.id);
+            const isKicking = kicking === u.id;
             return (
               <div key={u.id} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '8px 11px', background: 'var(--bg-surface)',
+                background: 'var(--bg-surface)',
                 borderRadius: 'var(--radius-sm)', border: '0.5px solid var(--border-default)',
+                overflow: 'hidden',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--accent-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--accent-green-dark)', fontWeight: 500 }}>
-                    {u.name?.charAt(0)}
+                {/* 상단: 이름 + 수정권한 토글 */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 11px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--accent-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--accent-green-dark)', fontWeight: 500 }}>
+                      {u.name?.charAt(0)}
+                    </div>
+                    <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{u.name}</span>
+                    {u.isAdmin && (
+                      <span style={{ fontSize: 10, color: 'var(--accent-amber-text)', background: 'var(--accent-amber)', padding: '1px 6px', borderRadius: 'var(--radius-full)' }}>관리자</span>
+                    )}
                   </div>
-                  <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{u.name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {/* 수정권한 토글 */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ fontSize: 10, color: 'var(--text-hint)' }}>수정</span>
+                      <div onClick={() => toggleEditable(u.id)} style={{
+                        width: 36, height: 20, borderRadius: 10,
+                        background: on ? 'var(--accent-green)' : 'var(--status-pending)',
+                        border: `0.5px solid ${on ? 'var(--border-default)' : 'var(--border-strong)'}`,
+                        position: 'relative', cursor: 'pointer', transition: 'background var(--transition-base)',
+                      }}>
+                        <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: on ? 19 : 3, transition: 'left var(--transition-base)', boxShadow: '0 1px 2px rgba(0,0,0,0.15)' }} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div onClick={() => toggleEditable(u.id)} style={{
-                  width: 36, height: 20, borderRadius: 10,
-                  background: on ? 'var(--accent-green)' : 'var(--status-pending)',
-                  border: `0.5px solid ${on ? 'var(--border-default)' : 'var(--border-strong)'}`,
-                  position: 'relative', cursor: 'pointer', transition: 'background var(--transition-base)',
-                }}>
-                  <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: on ? 19 : 3, transition: 'left var(--transition-base)', boxShadow: '0 1px 2px rgba(0,0,0,0.15)' }} />
-                </div>
+
+                {/* 추방 버튼 — 관리자 본인 제외 */}
+                {!u.isAdmin && (
+                  <div style={{ borderTop: '0.5px solid var(--border-default)', padding: '6px 11px' }}>
+                    <button
+                      onClick={() => handleKick(u.id)}
+                      disabled={isKicking}
+                      style={{
+                        width: '100%', height: 28, borderRadius: 'var(--radius-sm)',
+                        background: 'transparent', border: '0.5px solid #c87070',
+                        fontSize: 11, color: '#c87070',
+                        cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                      }}
+                    >
+                      {isKicking ? '처리 중...' : '교독에서 내보내기'}
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

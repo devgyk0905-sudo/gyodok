@@ -1,35 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import TopBar from '../../components/layout/TopBar';
-import { createGyodok, getAllUsers } from '../../supabase/db';
+import { createGyodok } from '../../supabase/db';
 
 export default function AdminCreatePage() {
   const { user }  = useAuth();
   const navigate  = useNavigate();
 
-  const [title,       setTitle]       = useState('');
-  const [startDate,   setStartDate]   = useState('');
-  const [endDate,     setEndDate]     = useState('');
-  const [allUsers,    setAllUsers]    = useState([]);
-  const [selected,    setSelected]    = useState([]);
-  const [saving,      setSaving]      = useState(false);
-
-  // 전체 계정 목록 로드
-  useEffect(() => {
-    getAllUsers()
-      .then(users => setAllUsers(users))
-      .catch(console.error);
-  }, []);
-
-  const toggleUser = (uid) => {
-    setSelected(prev =>
-      prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
-    );
-  };
+  const [title,     setTitle]     = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate,   setEndDate]   = useState('');
+  const [saving,    setSaving]    = useState(false);
 
   const handleCreate = async () => {
-    if (!title.trim() || !startDate || selected.length < 2) return;
+    if (!title.trim() || !startDate) return;
     setSaving(true);
     try {
       const newDoc = await createGyodok({
@@ -37,8 +22,9 @@ export default function AdminCreatePage() {
         status:         new Date(startDate) <= new Date() ? 'active' : 'upcoming',
         startDate:      new Date(startDate),
         endDate:        endDate ? new Date(endDate) : null,
-        participantIds: selected,
-        editableIds:    selected,
+        participantIds: [user.id],   // 관리자만 초기 참여자
+        pendingIds:     [],
+        editableIds:    [],
         checkpoints:    [],
         bookCovers:     [],
         createdBy:      user.id,
@@ -48,13 +34,11 @@ export default function AdminCreatePage() {
     finally { setSaving(false); }
   };
 
-  const isValid = title.trim() && startDate && selected.length >= 2;
+  const isValid = title.trim() && startDate;
 
   return (
     <div className="page">
-      <TopBar title="교독 생성" showBack
-        right={<AdminBadge />}
-      />
+      <TopBar title="교독 생성" showBack right={<AdminBadge />} />
       <div className="page-content fade-in">
 
         <FormSection label="교독 타이틀">
@@ -85,53 +69,19 @@ export default function AdminCreatePage() {
           />
         </FormSection>
 
-        <FormSection label={`참여자 추가 (최소 2명, 현재 ${selected.length}명 선택)`}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {allUsers.map(u => {
-              const isChecked = selected.includes(u.id);
-              return (
-                <div
-                  key={u.id}
-                  onClick={() => toggleUser(u.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '9px 12px',
-                    borderRadius: 'var(--radius-sm)',
-                    border: `0.5px solid ${isChecked ? 'var(--accent-green)' : 'var(--border-input)'}`,
-                    background: isChecked ? 'var(--accent-green)' : 'var(--bg-surface)',
-                    cursor: 'pointer',
-                    transition: 'all var(--transition-fast)',
-                  }}
-                >
-                  <div style={{
-                    width: 26, height: 26, borderRadius: '50%',
-                    background: isChecked ? 'var(--accent-green-dark)' : 'var(--bg-surface-secondary)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, color: isChecked ? 'var(--accent-green)' : 'var(--text-tertiary)',
-                    fontWeight: 500, flexShrink: 0,
-                  }}>
-                    {u.name?.charAt(0)}
-                  </div>
-                  <span style={{
-                    fontSize: 13, flex: 1,
-                    color: isChecked ? 'var(--accent-green-dark)' : 'var(--text-primary)',
-                    fontWeight: isChecked ? 500 : 400,
-                  }}>
-                    {u.name}
-                    {u.isAdmin && <span style={{ fontSize: 10, color: 'var(--accent-amber-text)', marginLeft: 5 }}>(관리자)</span>}
-                  </span>
-                  {isChecked && (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M2 7l3.5 3.5L12 3" stroke="var(--accent-green-dark)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </FormSection>
+        {/* 안내 문구 */}
+        <div style={{
+          padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+          background: 'var(--bg-surface-secondary)',
+          border: '0.5px solid var(--border-default)',
+          fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.7,
+          marginBottom: 14,
+        }}>
+          교독 생성 후 <span style={{ color: 'var(--accent-primary)', fontWeight: 500 }}>교독 관리</span> 페이지에서<br />
+          참여자를 초대할 수 있습니다.
+        </div>
 
-        <div style={{ height: '0.5px', background: 'var(--border-default)', margin: '14px 0' }} />
+        <div style={{ height: '0.5px', background: 'var(--border-default)', margin: '4px 0 14px' }} />
 
         <div style={{ display: 'flex', gap: 8 }}>
           <button
