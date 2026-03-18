@@ -38,7 +38,7 @@ export default function AdminCreatePage() {
 
   return (
     <div className="page">
-      <TopBar title="교독 생성" showBack right={<AdminBadge />} />
+      <TopBar title="교독 생성" showBack right={isAdmin ? <AdminBadge /> : null} />
       <div className="page-content fade-in">
 
         <FormSection label="교독 타이틀">

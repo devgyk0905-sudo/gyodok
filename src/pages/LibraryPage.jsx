@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import TopBar from '../components/layout/TopBar';
 import BottomNav from '../components/layout/BottomNav';
 import { Spinner, EmptyState, Divider, Toast } from '../components/common';
 import {
@@ -151,29 +152,29 @@ export default function LibraryPage() {
 
   return (
     <div className="page">
-      {/* 상단 배너 */}
-      <div style={{
-        background: 'linear-gradient(135deg, #ccd5ae 0%, #e9edc9 60%, #fefae0 100%)',
-        padding: '18px 14px 16px',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-      }}>
-        <div>
-          <div style={{ fontSize: 20, fontWeight: 500, color: '#3a4028', marginBottom: 4 }}>내 서재</div>
-          <div style={{ fontSize: 12, color: '#6a7040' }}>읽은 책과 읽고 싶은 책을 모아보세요</div>
-        </div>
-        <button onClick={() => setShowSearch(true)} style={{
-          padding: '7px 14px', borderRadius: 'var(--radius-full)',
-          background: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(255,255,255,0.9)',
-          fontSize: 12, color: '#3a4028', fontWeight: 500,
-          cursor: 'pointer', fontFamily: 'var(--font-sans)',
-          display: 'flex', alignItems: 'center', gap: 5,
-        }}>
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-            <path d="M6.5 1v11M1 6.5h11" stroke="#3a4028" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-          책 추가
-        </button>
-      </div>
+      {/* 그라데이션 TopBar */}
+      <TopBar
+        title="내 서재"
+        background="linear-gradient(135deg, #ccd5ae 0%, #e9edc9 60%, #fefae0 100%)"
+        titleColor="#3a4028"
+        right={
+          <button
+            onClick={() => setShowSearch(true)}
+            style={{
+              padding: '5px 12px', borderRadius: 'var(--radius-full)',
+              background: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(255,255,255,0.9)',
+              fontSize: 12, color: '#3a4028', fontWeight: 500,
+              cursor: 'pointer', fontFamily: 'var(--font-sans)',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke="#3a4028" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            책 추가
+          </button>
+        }
+      />
 
       {/* 탭 */}
       <div style={{ display: 'flex', gap: 6, padding: '10px 14px', borderBottom: '0.5px solid var(--border-default)', background: 'var(--bg-page)' }}>
@@ -283,7 +284,6 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
       <div className="slide-up" onClick={e => e.stopPropagation()} style={{
         flex: 1, background: 'var(--bg-surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
-        {/* 헤더 */}
         <div style={{ padding: '12px 14px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '0.5px solid var(--border-default)', flexShrink: 0 }}>
           <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>내 도서 상세</span>
           <button onClick={onClose} style={{ color: 'var(--text-tertiary)', padding: 4 }}>
@@ -292,7 +292,6 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 24px' }}>
-          {/* 책 기본 정보 */}
           <div style={{ display: 'flex', gap: 14, marginBottom: 14, alignItems: 'flex-start' }}>
             <div style={{ width: 72, height: 98, borderRadius: 8, background: 'var(--accent-green)', flexShrink: 0, overflow: 'hidden' }}>
               {book.coverUrl && <img src={book.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
@@ -344,7 +343,7 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
 
           <Divider />
 
-          {/* 교독에 추가 + 내 서재에서 삭제하기 — 반반 */}
+          {/* 교독에 추가 + 내 서재에서 삭제하기 */}
           <div style={{ display: 'flex', gap: 8, margin: '12px 0 16px' }}>
             <button
               onClick={() => setShowGyodokPicker(true)}
@@ -404,16 +403,10 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
         </div>
       </div>
 
-      {/* 교독 선택 피커 */}
       {showGyodokPicker && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', zIndex: 10,
-        }} onClick={() => setShowGyodokPicker(false)}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', zIndex: 10 }} onClick={() => setShowGyodokPicker(false)}>
           <div style={{ flex: 1 }} />
-          <div onClick={e => e.stopPropagation()} style={{
-            background: 'var(--bg-surface)', borderRadius: '16px 16px 0 0', padding: '16px 16px 32px',
-          }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-surface)', borderRadius: '16px 16px 0 0', padding: '16px 16px 32px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>교독 선택</span>
               <button onClick={() => setShowGyodokPicker(false)} style={{ color: 'var(--text-tertiary)', padding: 4 }}>
@@ -421,26 +414,15 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
               </button>
             </div>
             {activeGyodoks.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px 0', fontSize: 13, color: 'var(--text-tertiary)' }}>
-                진행 중이거나 예정된 교독이 없습니다
-              </div>
+              <div style={{ textAlign: 'center', padding: '20px 0', fontSize: 13, color: 'var(--text-tertiary)' }}>진행 중이거나 예정된 교독이 없습니다</div>
             ) : (
               activeGyodoks.map(g => (
-                <div key={g.id} onClick={() => { onAddToGyodok(g.id); setShowGyodokPicker(false); }} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '12px 0', borderBottom: '0.5px solid var(--border-default)', cursor: 'pointer',
-                }}>
+                <div key={g.id} onClick={() => { onAddToGyodok(g.id); setShowGyodokPicker(false); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '0.5px solid var(--border-default)', cursor: 'pointer' }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{g.title}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                      {g.status === 'active' ? '진행 중' : '예정'} · {g.startDate?.slice(0,10)}
-                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2 }}>{g.status === 'active' ? '진행 중' : '예정'} · {g.startDate?.slice(0,10)}</div>
                   </div>
-                  <span style={{
-                    padding: '3px 10px', borderRadius: 10, fontSize: 10, fontWeight: 500,
-                    background: g.status === 'active' ? 'var(--accent-green)' : 'var(--accent-amber)',
-                    color: g.status === 'active' ? 'var(--accent-green-dark)' : 'var(--accent-amber-text)',
-                  }}>
+                  <span style={{ padding: '3px 10px', borderRadius: 10, fontSize: 10, fontWeight: 500, background: g.status === 'active' ? 'var(--accent-green)' : 'var(--accent-amber)', color: g.status === 'active' ? 'var(--accent-green-dark)' : 'var(--accent-amber-text)' }}>
                     {g.status === 'active' ? '진행 중' : '예정'}
                   </span>
                 </div>
@@ -450,42 +432,17 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
         </div>
       )}
 
-      {/* 삭제 확인 팝업 */}
       {showDeleteConfirm && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '0 28px', zIndex: 10,
-        }} onClick={() => setShowDeleteConfirm(false)}>
-          <div onClick={e => e.stopPropagation()} style={{
-            width: '100%', background: 'var(--bg-surface)',
-            borderRadius: 'var(--radius-xl)', padding: '24px 20px 20px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-          }}>
-            {isInGyodok && (
-              <div style={{ fontSize: 11, color: '#c87070', fontWeight: 500, marginBottom: 8 }}>교독으로 진행했던 책</div>
-            )}
-            <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>
-              서재에서 삭제하시겠습니까?
-            </div>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 28px', zIndex: 10 }} onClick={() => setShowDeleteConfirm(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: 'var(--bg-surface)', borderRadius: 'var(--radius-xl)', padding: '24px 20px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+            {isInGyodok && <div style={{ fontSize: 11, color: '#c87070', fontWeight: 500, marginBottom: 8 }}>교독으로 진행했던 책</div>}
+            <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>서재에서 삭제하시겠습니까?</div>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 20 }}>
-              {isInGyodok
-                ? '교독으로 진행했던 책입니다. 삭제한 책은 복구가 불가능합니다.'
-                : '위시리스트에서도 함께 삭제됩니다.'
-              }
+              {isInGyodok ? '교독으로 진행했던 책입니다. 삭제한 책은 복구가 불가능합니다.' : '위시리스트에서도 함께 삭제됩니다.'}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setShowDeleteConfirm(false)} style={{
-                flex: 1, height: 40, borderRadius: 'var(--radius-md)',
-                border: '0.5px solid var(--border-input)', background: 'var(--bg-surface-secondary)',
-                fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer', fontFamily: 'var(--font-sans)',
-              }}>취소</button>
-              <button onClick={() => { setShowDeleteConfirm(false); onDelete(); }} style={{
-                flex: 2, height: 40, borderRadius: 'var(--radius-md)',
-                background: '#c87070', border: 'none',
-                fontSize: 13, color: '#fff', fontWeight: 500,
-                cursor: 'pointer', fontFamily: 'var(--font-sans)',
-              }}>삭제</button>
+              <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, height: 40, borderRadius: 'var(--radius-md)', border: '0.5px solid var(--border-input)', background: 'var(--bg-surface-secondary)', fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>취소</button>
+              <button onClick={() => { setShowDeleteConfirm(false); onDelete(); }} style={{ flex: 2, height: 40, borderRadius: 'var(--radius-md)', background: '#c87070', border: 'none', fontSize: 13, color: '#fff', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>삭제</button>
             </div>
           </div>
         </div>

@@ -1,7 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function TopBar({ title, showBack = false, right = null, notificationCount = 0, onNotificationClick }) {
+export default function TopBar({
+  title,
+  showBack = false,
+  right = null,
+  notificationCount = 0,
+  onNotificationClick,
+  background,
+  titleColor,
+}) {
   const navigate = useNavigate();
 
   return (
@@ -14,8 +22,8 @@ export default function TopBar({ title, showBack = false, right = null, notifica
       maxWidth: 'var(--app-width)',
       zIndex: 50,
       height: 'var(--top-bar-height)',
-      background: 'var(--bg-page)',
-      borderBottom: '0.5px solid var(--border-default)',
+      background: background || 'var(--bg-page)',
+      borderBottom: background ? 'none' : '0.5px solid var(--border-default)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -25,7 +33,7 @@ export default function TopBar({ title, showBack = false, right = null, notifica
         {showBack && (
           <button
             onClick={() => navigate(-1)}
-            style={{ padding: '4px 4px 4px 0', color: 'var(--text-secondary)' }}
+            style={{ padding: '4px 4px 4px 0', color: titleColor || 'var(--text-secondary)' }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M11 4L6 9l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -35,7 +43,7 @@ export default function TopBar({ title, showBack = false, right = null, notifica
         <span style={{
           fontSize: 16,
           fontWeight: 500,
-          color: 'var(--text-primary)',
+          color: titleColor || 'var(--text-primary)',
           letterSpacing: '-0.01em',
         }}>
           {title}
@@ -43,7 +51,7 @@ export default function TopBar({ title, showBack = false, right = null, notifica
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* 알림 아이콘 */}
+        {right && <div>{right}</div>}
         {onNotificationClick && (
           <button
             onClick={onNotificationClick}
@@ -56,11 +64,11 @@ export default function TopBar({ title, showBack = false, right = null, notifica
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path
                 d="M10 2a6 6 0 00-6 6v3l-1.5 2.5h15L16 11V8a6 6 0 00-6-6z"
-                stroke={notificationCount > 0 ? 'var(--accent-primary)' : 'var(--text-tertiary)'}
+                stroke={notificationCount > 0 ? 'var(--accent-primary)' : (titleColor || 'var(--text-tertiary)')}
                 strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"
               />
               <path d="M8 15.5a2 2 0 004 0"
-                stroke={notificationCount > 0 ? 'var(--accent-primary)' : 'var(--text-tertiary)'}
+                stroke={notificationCount > 0 ? 'var(--accent-primary)' : (titleColor || 'var(--text-tertiary)')}
                 strokeWidth="1.3"
               />
             </svg>
@@ -78,7 +86,6 @@ export default function TopBar({ title, showBack = false, right = null, notifica
             )}
           </button>
         )}
-        {right && <div>{right}</div>}
       </div>
     </header>
   );
