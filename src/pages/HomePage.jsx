@@ -197,15 +197,22 @@ export default function HomePage() {
           const myStatus = myCurrentBook ? sm[myCurrentBook.id]?.[user.id] : null;
 
           return (
-            <div key={g.id} style={{ marginBottom: 16 }}>
+            <div key={g.id} style={{
+              marginBottom: 20,
+              background: 'var(--bg-surface)',
+              borderRadius: 'var(--radius-lg)',
+              border: '0.5px solid var(--border-default)',
+              overflow: 'hidden',
+              boxShadow: 'var(--shadow-card)',
+            }}>
 
               {/* D-day 카드 */}
               <div
                 onClick={() => navigate(`/gyodok/${g.id}`)}
                 style={{
                   background: 'linear-gradient(135deg, #ccd5ae 0%, #faedcd 60%, #fefae0 100%)',
-                  borderRadius: 'var(--radius-lg)', padding: '12px 14px',
-                  marginBottom: 10, display: 'flex', justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  display: 'flex', justifyContent: 'space-between',
                   alignItems: 'center', cursor: 'pointer',
                 }}
               >
@@ -232,7 +239,7 @@ export default function HomePage() {
               </div>
 
               {/* 내 상태 */}
-              <Card style={{ marginBottom: 10 }}>
+              <div style={{ padding: '14px 16px', borderTop: '0.5px solid var(--border-default)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>내 상태</div>
                   <div style={{ fontSize: 11, color: 'var(--accent-primary)', fontWeight: 500 }}>
@@ -257,11 +264,11 @@ export default function HomePage() {
                     발송 완료 후 활성화됩니다
                   </div>
                 )}
-              </Card>
+              </div>
 
               {/* 독서 현황 */}
               {(g.participantIds || []).length > 0 && (
-                <Card>
+                <div style={{ padding: '14px 16px', borderTop: '0.5px solid var(--border-default)' }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>독서 현황</div>
                   {(g.participantIds || []).map((pid, idx) => (
                     <MemberRow
@@ -276,14 +283,14 @@ export default function HomePage() {
                       totalRounds={g.participantIds.length}
                     />
                   ))}
-                </Card>
+                </div>
               )}
             </div>
           );
         })}
 
         {/* ── 위시리스트 ── */}
-        <SectionHeader>내 위시리스트</SectionHeader>
+        <SectionHeader>내 다음 책 후보</SectionHeader>
         <Card style={{ padding: '8px 12px' }}>
           {wishlist.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '16px 0' }}>

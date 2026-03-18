@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import BottomNav from '../components/layout/BottomNav';
-import { Spinner, EmptyState, Divider } from '../components/common';
+import { Spinner, EmptyState, Divider, Toast } from '../components/common';
 import { getWishlist, removeFromWishlist, getGyodoks, getBooks, addToWishlist } from '../supabase/db';
 import { searchBooks } from '../utils/aladinApi';
 
@@ -19,6 +19,12 @@ export default function LibraryPage() {
   const [gyodokBooks, setGyodokBooks] = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [showSearch,  setShowSearch]  = useState(false);
+  const [toast,       setToast]       = useState({ msg: '', type: 'error' });
+
+  const showToast = (msg, type = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast({ msg: '', type: 'error' }), 4800);
+  };
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -51,7 +57,6 @@ export default function LibraryPage() {
 
   return (
     <div className="page">
-
       {/* 상단 배너 */}
       <div style={{
         background: 'linear-gradient(135deg, #ccd5ae 0%, #e9edc9 60%, #fefae0 100%)',
@@ -161,6 +166,7 @@ export default function LibraryPage() {
         </div>
       </div>
 
+      <Toast message={toast.msg} type={toast.type} />
       <BottomNav />
 
       {showSearch && (
@@ -169,8 +175,9 @@ export default function LibraryPage() {
           userId={user?.id}
           onAddWish={(book) => {
             setWishlist(prev => [book, ...prev]);
-            setShowSearch(false);
+            showToast('위시리스트에 추가했습니다', 'success');
           }}
+          onAddWishError={(msg) => showToast(msg, 'error')}
         />
       )}
     </div>
@@ -222,7 +229,7 @@ function BookItem({ book, isWish, onRemove }) {
   );
 }
 
-function BookSearchSheet({ onClose, userId, onAddWish }) {
+function BookSearchSheet({ onClose, userId, onAddWish, onAddWishError }) {
   const [query,    setQuery]    = useState('');
   const [results,  setResults]  = useState([]);
   const [loading,  setLoading]  = useState(false);
@@ -239,10 +246,12 @@ function BookSearchSheet({ onClose, userId, onAddWish }) {
   const handleAddWish = async (book) => {
     try {
       const added = await addToWishlist({ userId, ...book });
-      if (added) {
-        onAddWish({ id: added.id, ...book });
-      }
-    } catch (e) { console.error(e); }
+      if (added) onAddWish({ id: added.id, ...book });
+    } catch (e) {
+      if (e.message === 'ALREADY_EXISTS') {
+        onAddWishError('이미 위시리스트에 있는 책입니다');
+      } else { console.error(e); }
+    }
   };
 
   return (
@@ -281,8 +290,7 @@ function BookSearchSheet({ onClose, userId, onAddWish }) {
         <div style={{ flex: 1, overflowY: 'auto', padding: '13px 14px' }}>
           <div style={{ display: 'flex', gap: 7, marginBottom: 14 }}>
             <input
-              type="text"
-              value={query}
+              type="text" value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder="책 제목/저자/출판사 검색"
@@ -293,15 +301,12 @@ function BookSearchSheet({ onClose, userId, onAddWish }) {
                 fontSize: 13, color: 'var(--text-primary)',
               }}
             />
-            <button
-              onClick={handleSearch}
-              style={{
-                width: 38, height: 38, borderRadius: 'var(--radius-sm)',
-                background: 'var(--accent-primary)', border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
+            <button onClick={handleSearch} style={{
+              width: 38, height: 38, borderRadius: 'var(--radius-sm)',
+              background: 'var(--accent-primary)', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+            }}>
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <circle cx="6.5" cy="6.5" r="4" stroke="#fff" strokeWidth="1.3"/>
                 <path d="M10 10l2.5 2.5" stroke="#fff" strokeWidth="1.3" strokeLinecap="round"/>

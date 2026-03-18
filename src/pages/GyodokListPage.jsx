@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import TopBar from '../components/layout/TopBar';
 import BottomNav from '../components/layout/BottomNav';
 import { Pill, Spinner, EmptyState } from '../components/common';
-import { getGyodoks, getFavorites, addFavorite, removeFavorite } from '../supabase/db';
+import { getGyodoks, getFavorites, addFavorite, removeFavorite, getBooks } from '../supabase/db';
 
 const TABS = [
   { key: 'all',       label: '전체' },
@@ -27,15 +27,23 @@ export default function GyodokListPage() {
 
   const [tab,       setTab]       = useState('all');
   const [list,      setList]      = useState([]);
-  const [favIds,    setFavIds]    = useState([]);  // 즐찾된 gyodokId 배열 (순서 보장)
+  const [booksMap,  setBooksMap]  = useState({});  // gyodokId → books
+  const [favIds,    setFavIds]    = useState([]);
   const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {
     if (!user) return;
     Promise.all([getGyodoks(user.id), getFavorites(user.id)])
-      .then(([gyodoks, favs]) => {
+      .then(async ([gyodoks, favs]) => {
         setList(gyodoks);
         setFavIds(favs.map(f => f.gyodokId));
+        // 각 교독의 책 로드
+        const map = {};
+        await Promise.all(gyodoks.map(async g => {
+          const bks = await getBooks(g.id);
+          map[g.id] = bks;
+        }));
+        setBooksMap(map);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -117,6 +125,7 @@ export default function GyodokListPage() {
           <GyodokCard
             key={g.id}
             gyodok={g}
+            books={booksMap[g.id] || []}
             isFav={favIds.includes(g.id)}
             onFavorite={(e) => handleFavorite(e, g.id)}
             onClick={() => navigate(`/gyodok/${g.id}`)}
@@ -129,10 +138,12 @@ export default function GyodokListPage() {
   );
 }
 
-function GyodokCard({ gyodok, isFav, onFavorite, onClick }) {
+function GyodokCard({ gyodok, books, isFav, onFavorite, onClick }) {
   const pill = STATUS_PILL[gyodok.status] || STATUS_PILL.upcoming;
   const isCompleted = gyodok.status === 'completed';
-  const collageColors = ['var(--accent-green)', 'var(--accent-amber)', 'var(--color-beige)'];
+  const collageColors = ['var(--accent-green)', 'var(--accent-amber)', 'var(--color-beige)', 'var(--color-papaya-whip)'];
+  const n = Math.min(Math.max(gyodok.participantIds?.length || 3, 2), 4);
+  const covers = books.slice(0, n);
 
   return (
     <div
@@ -146,18 +157,29 @@ function GyodokCard({ gyodok, isFav, onFavorite, onClick }) {
       }}
     >
       {/* 책 콜라주 */}
-      <div style={{ width: 60, height: 78, flexShrink: 0, borderRadius: 8, overflow: 'hidden', display: 'flex' }}>
-        {(gyodok.bookCovers || [null, null, null]).slice(0, 3).map((url, i) => (
-          <div key={i} style={{
-            flex: 1, background: url ? 'transparent' : collageColors[i],
-            marginLeft: i > 0 ? -5 : 0,
-            borderRadius: i === 0 ? '6px 0 0 6px' : i === 2 ? '0 6px 6px 0' : 0,
-            overflow: 'hidden',
-          }}>
-            {url && <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+      {(() => {
+        const W = 90; const H = 78; const bookW = 56;
+        const offset = n === 1 ? 0 : (W - bookW) / (n - 1);
+        return (
+          <div style={{ width: W, height: H, flexShrink: 0, position: 'relative' }}>
+            {Array.from({ length: n }, (_, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                left: i * offset, top: 0,
+                width: bookW, height: H,
+                borderRadius: 5,
+                background: covers[i]?.coverUrl ? 'transparent' : collageColors[i % collageColors.length],
+                boxShadow: '2px 2px 4px rgba(0,0,0,0.1)',
+                overflow: 'hidden',
+              }}>
+                {covers[i]?.coverUrl && (
+                  <img src={covers[i].coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
       {/* 정보 */}
       <div style={{ flex: 1, minWidth: 0 }}>

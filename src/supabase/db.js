@@ -14,12 +14,6 @@ export const getUserByName = async (name) => {
   return data ? camelCase(data) : null;
 };
 
-export const updateUser = async (userId, fields) => {
-  const { error } = await supabase
-    .from('users').update(snakeCase(fields)).eq('id', userId);
-  if (error) throw error;
-};
-
 export const getAllUsers = async () => {
   const { data, error } = await supabase
     .from('users').select('*').order('created_at', { ascending: true });
@@ -32,6 +26,21 @@ export const createUser = async (fields) => {
     .from('users').insert(snakeCase(fields)).select().single();
   if (error) throw error;
   return data;
+};
+
+export const updateUser = async (userId, fields) => {
+  const payload = {
+    name:           fields.name,
+    phone:          fields.phone,
+    address:        fields.address,
+    address_detail: fields.addressDetail,
+    delivery_memo:  fields.deliveryMemo,
+    profile_image:  fields.profileImage,
+    zip_code:       fields.zipCode,
+  };
+  const { error } = await supabase
+    .from('users').update(payload).eq('id', userId);
+  if (error) throw error;
 };
 
 // ===== 교독 =====
@@ -66,29 +75,6 @@ export const updateGyodok = async (gyodokId, fields) => {
   if (error) throw error;
 };
 
-// ===== 책 =====
-
-export const getBooks = async (gyodokId) => {
-  const { data, error } = await supabase
-    .from('books').select('*').eq('gyodok_id', gyodokId)
-    .order('round', { ascending: true });
-  if (error) throw error;
-  return (data || []).map(camelCase);
-};
-
-export const addBook = async (gyodokId, fields) => {
-  const { data, error } = await supabase
-    .from('books').insert({ ...snakeCase(fields), gyodok_id: gyodokId }).select().single();
-  if (error) throw error;
-  return camelCase(data);
-};
-
-export const deleteBook = async (bookId) => {
-  const { error } = await supabase
-    .from('books').delete().eq('id', bookId);
-  if (error) throw error;
-};
-
 export const deleteGyodok = async (gyodokId) => {
   const { data: books } = await supabase
     .from('books').select('isbn').eq('gyodok_id', gyodokId);
@@ -100,6 +86,43 @@ export const deleteGyodok = async (gyodokId) => {
   }
   const { error } = await supabase
     .from('gyodoks').delete().eq('id', gyodokId);
+  if (error) throw error;
+};
+
+// ===== 책 =====
+
+export const getBooks = async (gyodokId) => {
+  const { data, error } = await supabase
+    .from('books').select('*').eq('gyodok_id', gyodokId)
+    .order('round', { ascending: true });
+  if (error) throw error;
+  return (data || []).map(camelCase);
+};
+
+export const addBook = async (gyodokId, fields) => {
+  const payload = {
+    gyodok_id:      gyodokId,
+    owner_id:       fields.ownerId,
+    round:          fields.round || 1,
+    exchange_order: fields.exchangeOrder || [],
+    isbn:           fields.isbn || '',
+    title:          fields.title || '',
+    author:         fields.author || '',
+    publisher:      fields.publisher || '',
+    publish_date:   fields.publishDate || '',
+    cover_url:      fields.coverUrl || '',
+    description:    fields.description || '',
+    price:          fields.price || 0,
+  };
+  const { data, error } = await supabase
+    .from('books').insert(payload).select().single();
+  if (error) throw error;
+  return camelCase(data);
+};
+
+export const deleteBook = async (bookId) => {
+  const { error } = await supabase
+    .from('books').delete().eq('id', bookId);
   if (error) throw error;
 };
 
@@ -170,8 +193,27 @@ export const getWishlist = async (userId) => {
 };
 
 export const addToWishlist = async (fields) => {
+  if (fields.isbn) {
+    const { data: existing } = await supabase
+      .from('wishlist').select('id')
+      .eq('user_id', fields.userId)
+      .eq('isbn', fields.isbn)
+      .maybeSingle();
+    if (existing) throw new Error('ALREADY_EXISTS');
+  }
+  const payload = {
+    user_id:    fields.userId,
+    isbn:       fields.isbn || '',
+    title:      fields.title || '',
+    author:     fields.author || '',
+    publisher:  fields.publisher || '',
+    cover_url:  fields.coverUrl || '',
+    description: fields.description || '',
+    price:      fields.price || 0,
+    publish_date: fields.publishDate || '',
+  };
   const { data, error } = await supabase
-    .from('wishlist').insert(snakeCase(fields)).select().single();
+    .from('wishlist').insert(payload).select().single();
   if (error) throw error;
   return camelCase(data);
 };
@@ -180,6 +222,23 @@ export const removeFromWishlist = async (wishlistId) => {
   const { error } = await supabase
     .from('wishlist').delete().eq('id', wishlistId);
   if (error) throw error;
+};
+
+export const removeFromWishlistByIsbn = async (userId, isbn) => {
+  const { error } = await supabase
+    .from('wishlist').delete()
+    .eq('user_id', userId)
+    .eq('isbn', isbn);
+  if (error) throw error;
+};
+
+export const getWishlistByIsbn = async (userId, isbn) => {
+  const { data } = await supabase
+    .from('wishlist').select('id')
+    .eq('user_id', userId)
+    .eq('isbn', isbn)
+    .maybeSingle();
+  return data;
 };
 
 // ===== 피드 =====

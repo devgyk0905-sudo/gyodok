@@ -268,3 +268,43 @@ export function EmptyState({ message, sub }) {
     </div>
   );
 }
+
+/* ===== 토스트 메시지 ===== */
+export function Toast({ message, type = 'error' }) {
+  if (!message) return null;
+  const bg    = type === 'success' ? '#87965c' : '#e76f51';
+  const color = type === 'success' ? '#f0f5e8' : '#fff5f2';
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '100%',
+      maxWidth: 'var(--app-width)',
+      background: bg,
+      color: color,
+      padding: '13px 18px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      zIndex: 500,
+      animation: 'fadeIn 0.15s ease',
+      fontSize: 13,
+      fontWeight: 500,
+    }}>
+      {type === 'success' ? (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="8" cy="8" r="6.5" stroke={color} strokeWidth="1.2"/>
+          <path d="M5 8l2 2 4-4" stroke={color} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="8" cy="8" r="6.5" stroke={color} strokeWidth="1.2"/>
+          <path d="M8 5v4M8 10.5v.5" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
+        </svg>
+      )}
+      {message}
+    </div>
+  );
+}

@@ -7,11 +7,12 @@ const NAV_ITEMS = [
     label: '홈',
     icon: (active) => (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect x="2" y="9" width="16" height="10" rx="2"
-          stroke={active ? 'var(--accent-primary)' : 'var(--text-tertiary)'} strokeWidth="1.3"/>
-        <path d="M5 9V7a5 5 0 0110 0v2"
+        <path d="M3 9.5L10 3l7 6.5"
           stroke={active ? 'var(--accent-primary)' : 'var(--text-tertiary)'}
-          strokeWidth="1.3" fill="none"/>
+          strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M5 8.5V16a1 1 0 001 1h3v-4h2v4h3a1 1 0 001-1V8.5"
+          stroke={active ? 'var(--accent-primary)' : 'var(--text-tertiary)'}
+          strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
       </svg>
     ),
   },

@@ -61,6 +61,7 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       const updated = { name, phone, address, addressDetail, deliveryMemo, profileImage, zipCode };
+      console.log('저장 데이터:', updated);
       await updateUser(user.id, updated);
       refreshUser(updated);
       navigate(-1);
@@ -138,15 +139,24 @@ export default function ProfilePage() {
             <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 5 }}>주소 변경</div>
             <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
               <div style={{
-                flex: 1, height: 38, borderRadius: 'var(--radius-sm)',
-                border: '0.5px solid var(--border-input)',
-                background: 'var(--bg-surface-secondary)',
-                padding: '0 10px',
-                display: 'flex', alignItems: 'center',
-                fontSize: 12, color: address ? 'var(--text-primary)' : 'var(--text-hint)',
-              }}>
-                {address || '주소를 검색해 주세요'}
-              </div>
+  flex: 1, borderRadius: 'var(--radius-sm)',
+  border: '0.5px solid var(--border-input)',
+  background: 'var(--bg-surface-secondary)',
+  padding: '6px 10px',
+  fontSize: 12, color: address ? 'var(--text-primary)' : 'var(--text-hint)',
+  minHeight: 38, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+}}>
+  {address ? (
+    <>
+      {zipCode && (
+        <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginBottom: 2 }}>
+          [{zipCode}]
+        </div>
+      )}
+      <div>{address}</div>
+    </>
+  ) : '주소를 검색해 주세요'}
+</div>
               <button
                 onClick={openAddressSearch}
                 style={{
