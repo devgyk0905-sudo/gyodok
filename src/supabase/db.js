@@ -89,6 +89,33 @@ export const deleteGyodok = async (gyodokId) => {
   if (error) throw error;
 };
 
+// ===== 교독 나가기 =====
+
+export const leaveGyodok = async (gyodokId, userId, gyodokStarted) => {
+  // 1. participantIds에서 제거
+  const { data: gyodok, error: fetchErr } = await supabase
+    .from('gyodoks').select('participant_ids').eq('id', gyodokId).single();
+  if (fetchErr) throw fetchErr;
+
+  const newIds = (gyodok.participant_ids || []).filter(id => id !== userId);
+  const { error: updateErr } = await supabase
+    .from('gyodoks').update({ participant_ids: newIds }).eq('id', gyodokId);
+  if (updateErr) throw updateErr;
+
+  // 2. 교독 시작 전이면 book_statuses 삭제, 시작 후면 유지
+  if (!gyodokStarted) {
+    const { data: books } = await supabase
+      .from('books').select('id').eq('gyodok_id', gyodokId);
+    if (books?.length) {
+      const bookIds = books.map(b => b.id);
+      await supabase.from('book_statuses')
+        .delete()
+        .in('book_id', bookIds)
+        .eq('user_id', userId);
+    }
+  }
+};
+
 // ===== 책 =====
 
 export const getBooks = async (gyodokId) => {
@@ -208,14 +235,14 @@ export const addToWishlist = async (fields) => {
     if (existing) throw new Error('ALREADY_EXISTS');
   }
   const payload = {
-    user_id:    fields.userId,
-    isbn:       fields.isbn || '',
-    title:      fields.title || '',
-    author:     fields.author || '',
-    publisher:  fields.publisher || '',
-    cover_url:  fields.coverUrl || '',
+    user_id:     fields.userId,
+    isbn:        fields.isbn || '',
+    title:       fields.title || '',
+    author:      fields.author || '',
+    publisher:   fields.publisher || '',
+    cover_url:   fields.coverUrl || '',
     description: fields.description || '',
-    price:      fields.price || 0,
+    price:       fields.price || 0,
     publish_date: fields.publishDate || '',
   };
   const { data, error } = await supabase

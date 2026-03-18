@@ -10,10 +10,10 @@ import {
 import {
   getGyodok, getBooks, getBookStatus, updateBookStatus,
   addFeedItem, getAllUsers, addBook, addToWishlist, deleteBook,
-  removeFromWishlistByIsbn,
+  removeFromWishlistByIsbn, leaveGyodok,
 } from '../supabase/db';
 import { searchBooks } from '../utils/aladinApi';
-import { getBookCardState, calcGyodokStatus } from '../utils/statusCalc';
+import { getBookCardState, calcGyodokStatus, getPersonalCurrentRound } from '../utils/statusCalc';
 
 export default function GyodokDetailPage() {
   const { id }   = useParams();
@@ -120,6 +120,19 @@ export default function GyodokDetailPage() {
     } catch (e) { console.error(e); }
   };
 
+  const handleLeaveGyodok = async () => {
+    if (!window.confirm('교독에서 나가시겠습니까?')) return;
+    try {
+      const gyodokStarted = books.length > 0;
+      await leaveGyodok(id, user.id, gyodokStarted);
+      showToast('교독에서 나갔습니다', 'success');
+      setTimeout(() => navigate('/'), 1200);
+    } catch (e) {
+      console.error(e);
+      showToast('오류가 발생했습니다');
+    }
+  };
+
   if (loading) return (
     <div className="page"><TopBar title="교독 상세" showBack /><Spinner /><BottomNav /></div>
   );
@@ -199,9 +212,13 @@ export default function GyodokDetailPage() {
           const isLast     = pidIdx === sortedParticipants.length - 1;
           const memberName = userMap[pid]?.name || pid;
           const memberData = userMap[pid];
-          const profileSize = isMe ? 60 : 40;
-          const nameFontSize = isMe ? 11 : 9;
-          const myBooks    = Array.from({ length: totalRounds }, (_, i) => {
+          const profileSize   = isMe ? 48 : 36;
+          const nameFontSize  = isMe ? 10 : 9;
+
+          // 개인별 현재 차수
+          const personalRound = getPersonalCurrentRound(pid, books, allStatuses, totalRounds);
+
+          const myBooks = Array.from({ length: totalRounds }, (_, i) => {
             const round = i + 1;
             return books.find(b => b.round === round && b.ownerId === pid) || null;
           });
@@ -225,7 +242,7 @@ export default function GyodokDetailPage() {
                     width: profileSize, height: profileSize, borderRadius: '50%',
                     background: isMe ? 'var(--accent-primary)' : 'var(--accent-green)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: isMe ? 20 : 14, fontWeight: 500,
+                    fontSize: isMe ? 16 : 13, fontWeight: 500,
                     color: isMe ? '#fff' : 'var(--accent-green-dark)',
                     overflow: 'hidden', flexShrink: 0,
                     border: isMe ? '2px solid var(--accent-primary)' : '2px solid var(--accent-green)',
@@ -247,13 +264,13 @@ export default function GyodokDetailPage() {
                 </div>
 
                 {/* 책 목록 */}
-                <div style={{ display: 'flex', gap: 10, flex: 1, alignItems: 'flex-start', paddingTop: isMe ? 8 : 0 }}>
+                <div style={{ display: 'flex', gap: 10, flex: 1, alignItems: 'flex-start', paddingTop: isMe ? 6 : 0 }}>
                   {myBooks.map((book, i) => {
                     const round = i + 1;
-                    const state = getBookCardState(round, gyodokStatus.round);
+                    const state = getBookCardState(round, personalRound);
                     const st    = book ? allStatuses[book.id]?.[pid] : null;
                     const canSelect = isMe && !book && round > 1;
-                    const canSearch = isMe && !book && round === 1; // 1차 빈칸 클릭 → 검색
+                    const canSearch = isMe && !book && round === 1;
                     return (
                       <div key={round} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                         <div
@@ -299,7 +316,7 @@ export default function GyodokDetailPage() {
                           )}
                         </div>
                         <span style={{ fontSize: 8, color: 'var(--text-tertiary)' }}>{round}차</span>
-                        <BookStatusBadge round={round} currentRound={gyodokStatus.round} status={st} />
+                        <BookStatusBadge round={round} currentRound={personalRound} status={st} />
                       </div>
                     );
                   })}
@@ -308,6 +325,25 @@ export default function GyodokDetailPage() {
             </div>
           );
         })}
+
+        {/* 교독 나가기 버튼 — 관리자 제외 */}
+        {!isAdmin && (
+          <div style={{ paddingTop: 8 }}>
+            <button
+              onClick={handleLeaveGyodok}
+              style={{
+                width: '100%', height: 40, borderRadius: 'var(--radius-md)',
+                background: 'transparent',
+                border: '0.5px solid var(--border-input)',
+                fontSize: 13, color: 'var(--text-tertiary)',
+                cursor: 'pointer', fontFamily: 'var(--font-sans)',
+              }}
+            >
+              교독에서 나가기
+            </button>
+          </div>
+        )}
+
         <div style={{ height: 16 }} />
       </div>
 
@@ -367,22 +403,24 @@ export default function GyodokDetailPage() {
 
 function CollageImage({ books }) {
   const n = Math.min(Math.max(books.length, 2), 4);
-  const covers = books.slice(0, n);
   const colors = ['var(--color-papaya-whip)', 'var(--color-beige)', 'var(--accent-green)', 'var(--accent-amber)'];
   const W = 150; const H = 104; const bookW = 82;
   const offset = n === 1 ? 0 : (W - bookW) / (n - 1);
   return (
     <div style={{ width: W, height: H, flexShrink: 0, position: 'relative' }}>
-      {Array.from({ length: n }, (_, i) => (
-        <div key={i} style={{
-          position: 'absolute', left: i * offset, top: 0,
-          width: bookW, height: H, borderRadius: 7,
-          background: covers[i]?.coverUrl ? 'transparent' : colors[i % colors.length],
-          boxShadow: '3px 3px 6px rgba(0,0,0,0.12)', overflow: 'hidden',
-        }}>
-          {covers[i]?.coverUrl && <img src={covers[i].coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-        </div>
-      ))}
+      {Array.from({ length: n }, (_, i) => {
+        const cover = books[i]?.coverUrl;
+        return (
+          <div key={i} style={{
+            position: 'absolute', left: i * offset, top: 0,
+            width: bookW, height: H, borderRadius: 7,
+            background: cover ? 'transparent' : colors[i % colors.length],
+            boxShadow: '3px 3px 6px rgba(0,0,0,0.12)', overflow: 'hidden',
+          }}>
+            {cover && <img src={cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+          </div>
+        );
+      })}
     </div>
   );
 }
