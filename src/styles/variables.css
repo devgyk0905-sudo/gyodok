@@ -61,7 +61,7 @@
 
   /* 모바일 컨테이너 */
   --app-width: 390px;
-  --bottom-nav-height: 60px;
+  --bottom-nav-height: 72px;   /* 기존 60px → 72px */
   --top-bar-height: 52px;
 
   /* 폰트 */

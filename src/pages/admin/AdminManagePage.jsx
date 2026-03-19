@@ -29,7 +29,6 @@ export default function AdminManagePage() {
   const [checkpoints,    setCheckpoints]    = useState([]);
   const [saving,         setSaving]         = useState(false);
   const [loading,        setLoading]        = useState(true);
-
   const [participantIds, setParticipantIds] = useState([]);
   const [pendingIds,     setPendingIds]     = useState([]);
   const [inviting,       setInviting]       = useState(null);
@@ -127,7 +126,6 @@ export default function AdminManagePage() {
   if (loading) return <div className="page"><TopBar title="교독 관리" showBack /></div>;
 
   const isHost = gyodok?.createdBy === user?.id;
-
   const invitableUsers   = allUsers.filter(u => !participantIds.includes(u.id) && !pendingIds.includes(u.id));
   const pendingUsers     = allUsers.filter(u => pendingIds.includes(u.id));
   const participantUsers = allUsers.filter(u => participantIds.includes(u.id));
@@ -218,7 +216,7 @@ export default function AdminManagePage() {
                 width: 32, height: 36, borderRadius: 'var(--radius-sm)',
                 background: 'var(--bg-surface-secondary)', border: '0.5px solid var(--border-input)',
                 color: 'var(--text-tertiary)', cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
@@ -254,18 +252,11 @@ export default function AdminManagePage() {
                   <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{u.name}</span>
                   <span style={{ fontSize: 10, color: 'var(--accent-amber-text)', background: 'var(--accent-amber)', padding: '1px 6px', borderRadius: 'var(--radius-full)' }}>대기 중</span>
                 </div>
-                <button
-                  onClick={() => handleCancelInvite(u.id)}
-                  disabled={inviting === u.id}
-                  style={{
-                    padding: '4px 10px', borderRadius: 'var(--radius-full)',
-                    background: 'transparent', border: '0.5px solid var(--border-input)',
-                    fontSize: 11, color: 'var(--text-tertiary)',
-                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                  }}
-                >
-                  취소
-                </button>
+                <button onClick={() => handleCancelInvite(u.id)} disabled={inviting === u.id} style={{
+                  padding: '4px 10px', borderRadius: 'var(--radius-full)',
+                  background: 'transparent', border: '0.5px solid var(--border-input)',
+                  fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                }}>취소</button>
               </div>
             ))}
           </div>
@@ -287,16 +278,12 @@ export default function AdminManagePage() {
                   </div>
                   <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{u.name}</span>
                 </div>
-                <button
-                  onClick={() => handleInvite(u.id)}
-                  disabled={inviting === u.id}
-                  style={{
-                    padding: '4px 10px', borderRadius: 'var(--radius-full)',
-                    background: 'var(--accent-primary)', border: 'none',
-                    fontSize: 11, color: '#fff', fontWeight: 500,
-                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                  }}
-                >
+                <button onClick={() => handleInvite(u.id)} disabled={inviting === u.id} style={{
+                  padding: '4px 10px', borderRadius: 'var(--radius-full)',
+                  background: 'var(--accent-primary)', border: 'none',
+                  fontSize: 11, color: '#fff', fontWeight: 500,
+                  cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                }}>
                   {inviting === u.id ? '...' : '초대'}
                 </button>
               </div>
@@ -347,20 +334,13 @@ export default function AdminManagePage() {
                     </div>
                   </div>
                 </div>
-
-                {/* 추방 — 방장/관리자 본인 제외 */}
                 {!isThisHost && !u.isAdmin && (
                   <div style={{ borderTop: '0.5px solid var(--border-default)', padding: '6px 11px' }}>
-                    <button
-                      onClick={() => handleKick(u.id)}
-                      disabled={isKicking}
-                      style={{
-                        width: '100%', height: 28, borderRadius: 'var(--radius-sm)',
-                        background: 'transparent', border: '0.5px solid #c87070',
-                        fontSize: 11, color: '#c87070',
-                        cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                      }}
-                    >
+                    <button onClick={() => handleKick(u.id)} disabled={isKicking} style={{
+                      width: '100%', height: 28, borderRadius: 'var(--radius-sm)',
+                      background: 'transparent', border: '0.5px solid #c87070',
+                      fontSize: 11, color: '#c87070', cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                    }}>
                       {isKicking ? '처리 중...' : '교독에서 내보내기'}
                     </button>
                   </div>
@@ -410,9 +390,15 @@ function FormField({ label, value, onChange, placeholder, type = 'text' }) {
 }
 
 const inputSt = {
-  width: '100%', height: 36, borderRadius: 'var(--radius-sm)',
-  border: '0.5px solid var(--border-input)', background: 'var(--bg-input)',
-  padding: '0 12px', fontSize: 12, color: 'var(--text-primary)', fontFamily: 'var(--font-sans)',
+  width: '100%',
+  boxSizing: 'border-box',
+  height: 36,
+  borderRadius: 'var(--radius-sm)',
+  border: '0.5px solid var(--border-input)',
+  background: 'var(--bg-input)',
+  padding: '0 12px',
+  fontSize: 12, color: 'var(--text-primary)',
+  fontFamily: 'var(--font-sans)',
 };
 
 function toInputDate(ts) {

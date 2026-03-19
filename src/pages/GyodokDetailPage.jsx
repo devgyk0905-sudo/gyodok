@@ -92,9 +92,7 @@ export default function GyodokDetailPage() {
         gyodokId: undefined,
       };
       await addBook(id, payload);
-      if (bookData.isbn) {
-        await removeFromWishlistByIsbn(user.id, bookData.isbn);
-      }
+      if (bookData.isbn) await removeFromWishlistByIsbn(user.id, bookData.isbn);
       await load();
       setShowBookSelect(null);
       setShowBookSearch(false);
@@ -102,39 +100,27 @@ export default function GyodokDetailPage() {
     } catch (e) { console.error(e); }
   };
 
-  const handleSelectBook = async (book, round) => {
-    await doAddBook(book, round);
-  };
+  const handleSelectBook = async (book, round) => { await doAddBook(book, round); };
 
   const handleAddBook = async (bookData) => {
     const myBook = books.find(b => b.ownerId === user.id && b.round === 1);
-    if (myBook) {
-      showToast('등록한 책을 먼저 삭제 후 추가해 주세요');
-      return;
-    }
+    if (myBook) { showToast('등록한 책을 먼저 삭제 후 추가해 주세요'); return; }
     await doAddBook(bookData, 1);
   };
 
   const handleDeleteBook = async (bookId) => {
     if (!window.confirm('이 책을 삭제하시겠습니까?')) return;
-    try {
-      await deleteBook(bookId);
-      setSelectedBook(null);
-      await load();
-    } catch (e) { console.error(e); }
+    try { await deleteBook(bookId); setSelectedBook(null); await load(); }
+    catch (e) { console.error(e); }
   };
 
   const handleLeaveGyodok = async () => {
     if (!window.confirm('교독에서 나가시겠습니까?')) return;
     try {
-      const gyodokStarted = books.length > 0;
-      await leaveGyodok(id, user.id, gyodokStarted);
+      await leaveGyodok(id, user.id, books.length > 0);
       showToast('교독에서 나갔습니다', 'success');
       setTimeout(() => navigate('/'), 1200);
-    } catch (e) {
-      console.error(e);
-      showToast('오류가 발생했습니다');
-    }
+    } catch (e) { console.error(e); showToast('오류가 발생했습니다'); }
   };
 
   if (loading) return (
@@ -154,9 +140,7 @@ export default function GyodokDetailPage() {
   );
 
   const leftParticipantIds = [
-    ...new Set(
-      books.map(b => b.ownerId).filter(oid => !(gyodok.participantIds || []).includes(oid))
-    )
+    ...new Set(books.map(b => b.ownerId).filter(oid => !(gyodok.participantIds || []).includes(oid)))
   ];
 
   const sortedParticipants = [
@@ -167,26 +151,8 @@ export default function GyodokDetailPage() {
 
   return (
     <div className="page">
-      <TopBar
-        title="교독 상세"
-        showBack
-        right={
-          canManage ? (
-            <button
-              onClick={() => navigate(`/admin/manage/${id}`)}
-              style={{
-                padding: '5px 10px', borderRadius: 8,
-                background: 'var(--accent-amber)',
-                border: '0.5px solid var(--border-strong)',
-                fontSize: 11, color: 'var(--accent-amber-text)',
-                cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
-              }}
-            >
-              교독 관리
-            </button>
-          ) : null
-        }
-      />
+      {/* TopBar — 교독 관리 버튼 없음 */}
+      <TopBar title="교독 상세" showBack />
 
       <div className="page-content fade-in">
         {/* 교독 헤더 */}
@@ -202,14 +168,32 @@ export default function GyodokDetailPage() {
             <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 3 }}>
               {formatDate(gyodok.startDate)}{gyodok.endDate ? ` ~ ${formatDate(gyodok.endDate)}` : ''}
             </div>
-            <div style={{ display: 'flex', marginTop: 6 }}>
-              {(gyodok.participantIds || []).slice(0, 4).map((pid, i) => (
-                <div key={pid} style={{
-                  width: 20, height: 20, borderRadius: '50%',
-                  background: ['var(--accent-green)', 'var(--accent-amber)', 'var(--accent-primary)', 'var(--color-beige)'][i % 4],
-                  border: '1.5px solid var(--bg-page)', marginLeft: i > 0 ? -6 : 0,
-                }} />
-              ))}
+            {/* 참여자 아바타 + 교독 관리 버튼 같은 줄 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+              <div style={{ display: 'flex' }}>
+                {(gyodok.participantIds || []).slice(0, 4).map((pid, i) => (
+                  <div key={pid} style={{
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: ['var(--accent-green)', 'var(--accent-amber)', 'var(--accent-primary)', 'var(--color-beige)'][i % 4],
+                    border: '1.5px solid var(--bg-page)', marginLeft: i > 0 ? -6 : 0,
+                  }} />
+                ))}
+              </div>
+              {/* 교독 관리 버튼 — 방장/관리자만 */}
+              {canManage && (
+                <button
+                  onClick={() => navigate(`/admin/manage/${id}`)}
+                  style={{
+                    padding: '4px 10px', borderRadius: 8,
+                    background: 'var(--accent-amber)',
+                    border: '0.5px solid var(--border-strong)',
+                    fontSize: 11, color: 'var(--accent-amber-text)',
+                    cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
+                  }}
+                >
+                  교독 관리
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -289,11 +273,7 @@ export default function GyodokDetailPage() {
                     return (
                       <div key={round} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                         <div
-                          onClick={
-                            canSearch ? () => setShowBookSearch(true)
-                            : canSelect ? () => setShowBookSelect(round)
-                            : undefined
-                          }
+                          onClick={canSearch ? () => setShowBookSearch(true) : canSelect ? () => setShowBookSelect(round) : undefined}
                           style={{ cursor: (canSearch || canSelect) ? 'pointer' : 'default' }}
                         >
                           {canSearch ? (
@@ -331,9 +311,7 @@ export default function GyodokDetailPage() {
                           )}
                         </div>
                         <span style={{ fontSize: 8, color: 'var(--text-tertiary)' }}>{round}차</span>
-                        {!isLeft && (
-                          <BookStatusBadge round={round} currentRound={personalRound} status={st} />
-                        )}
+                        {!isLeft && <BookStatusBadge round={round} currentRound={personalRound} status={st} />}
                       </div>
                     );
                   })}
@@ -346,16 +324,12 @@ export default function GyodokDetailPage() {
         {/* 교독 나가기 — 방장/관리자 제외 */}
         {!canManage && (
           <div style={{ paddingTop: 16 }}>
-            <button
-              onClick={handleLeaveGyodok}
-              style={{
-                width: '100%', height: 40, borderRadius: 'var(--radius-md)',
-                background: 'transparent',
-                border: '0.5px solid var(--border-input)',
-                fontSize: 13, color: 'var(--text-tertiary)',
-                cursor: 'pointer', fontFamily: 'var(--font-sans)',
-              }}
-            >
+            <button onClick={handleLeaveGyodok} style={{
+              width: '100%', height: 40, borderRadius: 'var(--radius-md)',
+              background: 'transparent', border: '0.5px solid var(--border-input)',
+              fontSize: 13, color: 'var(--text-tertiary)',
+              cursor: 'pointer', fontFamily: 'var(--font-sans)',
+            }}>
               교독에서 나가기
             </button>
           </div>
@@ -367,9 +341,7 @@ export default function GyodokDetailPage() {
       <BottomNav />
       <Toast message={toast.msg} type={toast.type} />
 
-      {selectedMember && (
-        <MemberProfileSheet member={selectedMember} onClose={() => setSelectedMember(null)} />
-      )}
+      {selectedMember && <MemberProfileSheet member={selectedMember} onClose={() => setSelectedMember(null)} />}
 
       {selectedBook && (
         <BookFullSheet
@@ -408,9 +380,8 @@ export default function GyodokDetailPage() {
               await addToWishlist({ userId: user?.id, ...book });
               showToast('위시리스트에 추가했습니다', 'success');
             } catch (e) {
-              if (e.message === 'ALREADY_EXISTS') {
-                showToast('이미 위시리스트에 있는 책입니다', 'error');
-              } else { console.error(e); }
+              if (e.message === 'ALREADY_EXISTS') showToast('이미 위시리스트에 있는 책입니다', 'error');
+              else console.error(e);
             }
           }}
         />
@@ -515,9 +486,7 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,
                     <StatusButton label="다 읽었어요!" active={!!status?.isRead} disabled={!status?.isArrived} onClick={() => onStatusChange('isRead')} />
                     <StatusButton label="발송했어요!" active={!!status?.isSent} disabled={!status?.isArrived} onClick={() => onStatusChange('isSent')} />
                   </div>
-                  {!status?.isArrived && (
-                    <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 6 }}>도착 확인 후 활성화됩니다</div>
-                  )}
+                  {!status?.isArrived && <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 6 }}>도착 확인 후 활성화됩니다</div>}
                 </>
               )}
               {isLastRound && (
@@ -528,9 +497,7 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,
                   <div style={{ display: 'flex', gap: 6 }}>
                     <StatusButton label="다 읽었어요!" active={!!status?.isRead} disabled={!status?.isArrived} onClick={() => onStatusChange('isRead')} />
                   </div>
-                  {!status?.isArrived && (
-                    <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 6 }}>도착 확인 후 활성화됩니다</div>
-                  )}
+                  {!status?.isArrived && <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'center', marginTop: 6 }}>도착 확인 후 활성화됩니다</div>}
                 </>
               )}
             </>
@@ -596,10 +563,9 @@ function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,
 }
 
 function BookSearchSheet({ onClose, onAddBook, onAddWish }) {
-  const [query,   setQuery]   = useState('');
+  const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const handleSearch = async () => {
     if (!query.trim()) return;
     setLoading(true);
@@ -607,7 +573,6 @@ function BookSearchSheet({ onClose, onAddBook, onAddWish }) {
     catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
-
   return (
     <div style={{ position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 'var(--app-width)', bottom: 0, zIndex: 200, background: 'rgba(0,0,0,0.28)', display: 'flex', flexDirection: 'column' }} onClick={onClose}>
       <div style={{ height: 52, flexShrink: 0 }} />
@@ -652,11 +617,7 @@ function BookSearchSheet({ onClose, onAddBook, onAddWish }) {
 
 function BookSelectSheet({ round, books, userId, userMap, participantIds, onClose, onSelect }) {
   const myBooks = books.filter(b => b.ownerId === userId);
-  const candidates = books.filter(b =>
-    b.round === 1 && b.ownerId !== userId &&
-    !myBooks.find(mb => mb.isbn && mb.isbn === b.isbn)
-  );
-
+  const candidates = books.filter(b => b.round === 1 && b.ownerId !== userId && !myBooks.find(mb => mb.isbn && mb.isbn === b.isbn));
   return (
     <div style={{ position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 'var(--app-width)', bottom: 0, zIndex: 200, background: 'rgba(0,0,0,0.28)', display: 'flex', flexDirection: 'column' }} onClick={onClose}>
       <div style={{ height: 52, flexShrink: 0 }} />
@@ -671,24 +632,19 @@ function BookSelectSheet({ round, books, userId, userMap, participantIds, onClos
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 14 }}>다른 참여자가 등록한 책 중에서 선택해 주세요</div>
           {candidates.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-tertiary)', fontSize: 13 }}>선택 가능한 책이 없습니다<br />다른 참여자가 먼저 책을 등록해야 합니다</div>
-          ) : (
-            candidates.map((book, i) => {
-              const ownerName = userMap[book.ownerId]?.name || '참여자';
-              return (
-                <div key={book.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: i < candidates.length - 1 ? '0.5px solid var(--border-default)' : 'none', alignItems: 'center' }}>
-                  <div style={{ width: 50, height: 68, borderRadius: 6, background: 'var(--accent-green)', flexShrink: 0, overflow: 'hidden' }}>
-                    {book.coverUrl && <img src={book.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: 3 }}>{book.title}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 6 }}>{book.author} · {book.publisher}</div>
-                    <div style={{ fontSize: 10, color: 'var(--accent-primary)', fontWeight: 500 }}>{ownerName}님의 책</div>
-                  </div>
-                  <button onClick={() => onSelect(book)} style={{ padding: '7px 14px', borderRadius: 8, background: 'var(--accent-green)', border: '0.5px solid var(--border-default)', fontSize: 11, color: 'var(--accent-green-dark)', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans)', flexShrink: 0 }}>선택</button>
-                </div>
-              );
-            })
-          )}
+          ) : candidates.map((book, i) => (
+            <div key={book.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: i < candidates.length - 1 ? '0.5px solid var(--border-default)' : 'none', alignItems: 'center' }}>
+              <div style={{ width: 50, height: 68, borderRadius: 6, background: 'var(--accent-green)', flexShrink: 0, overflow: 'hidden' }}>
+                {book.coverUrl && <img src={book.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: 3 }}>{book.title}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 6 }}>{book.author} · {book.publisher}</div>
+                <div style={{ fontSize: 10, color: 'var(--accent-primary)', fontWeight: 500 }}>{userMap[book.ownerId]?.name || '참여자'}님의 책</div>
+              </div>
+              <button onClick={() => onSelect(book)} style={{ padding: '7px 14px', borderRadius: 8, background: 'var(--accent-green)', border: '0.5px solid var(--border-default)', fontSize: 11, color: 'var(--accent-green-dark)', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans)', flexShrink: 0 }}>선택</button>
+            </div>
+          ))}
         </div>
       </div>
     </div>

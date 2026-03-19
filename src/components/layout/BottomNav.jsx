@@ -6,7 +6,7 @@ const NAV_ITEMS = [
     path: '/home',
     label: '홈',
     icon: (active) => (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
         <path d="M3 9.5L10 3l7 6.5"
           stroke={active ? 'var(--accent-primary)' : 'var(--text-tertiary)'}
           strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
@@ -20,7 +20,7 @@ const NAV_ITEMS = [
     path: '/gyodok',
     label: '교독',
     icon: (active) => (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
         <rect x="2" y="2" width="6" height="9" rx="1.5"
           stroke={active ? 'var(--accent-primary)' : 'var(--text-tertiary)'} strokeWidth="1.3"/>
         <rect x="12" y="2" width="6" height="5" rx="1.5"
@@ -36,7 +36,7 @@ const NAV_ITEMS = [
     path: '/library',
     label: '서재',
     icon: (active) => (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
         <path d="M4 16V5a1 1 0 011-1h10a1 1 0 011 1v11"
           stroke={active ? 'var(--accent-primary)' : 'var(--text-tertiary)'} strokeWidth="1.3"/>
         <path d="M3 16h14"
@@ -52,7 +52,7 @@ const NAV_ITEMS = [
     path: '/more',
     label: '마이페이지',
     icon: (active) => (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
         <circle cx="10" cy="8" r="3.5"
           stroke={active ? 'var(--accent-primary)' : 'var(--text-tertiary)'} strokeWidth="1.3"/>
         <path d="M3 18c0-3.9 3.1-7 7-7s7 3.1 7 7"
@@ -63,7 +63,7 @@ const NAV_ITEMS = [
 ];
 
 export default function BottomNav() {
-  const navigate  = useNavigate();
+  const navigate     = useNavigate();
   const { pathname } = useLocation();
 
   return (
@@ -80,7 +80,7 @@ export default function BottomNav() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-around',
-      paddingBottom: 6,
+      paddingBottom: 'env(safe-area-inset-bottom, 8px)',
       zIndex: 100,
     }}>
       {NAV_ITEMS.map(item => {
@@ -93,13 +93,13 @@ export default function BottomNav() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 2,
-              fontSize: 10,
+              gap: 3,
+              fontSize: 11,
               color: active ? 'var(--accent-primary)' : 'var(--text-tertiary)',
               fontWeight: active ? 500 : 400,
               background: 'none',
               border: 'none',
-              padding: '4px 12px',
+              padding: '6px 16px',
               cursor: 'pointer',
               transition: 'color var(--transition-fast)',
             }}

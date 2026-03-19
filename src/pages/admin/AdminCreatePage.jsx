@@ -148,7 +148,9 @@ function AdminBadge() {
 }
 
 const inputStyle = {
-  width: '100%', height: 40,
+  width: '100%',
+  boxSizing: 'border-box',
+  height: 40,
   borderRadius: 'var(--radius-sm)',
   border: '0.5px solid var(--border-input)',
   background: 'var(--bg-input)',
