@@ -4,14 +4,13 @@ import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './hooks/useTheme';
 import './styles/global.css';
 
-// 페이지 (lazy import)
-import LoginPage      from './pages/LoginPage';
-import HomePage       from './pages/HomePage';
-import GyodokListPage from './pages/GyodokListPage';
+import LoginPage        from './pages/LoginPage';
+import HomePage         from './pages/HomePage';
+import GyodokListPage   from './pages/GyodokListPage';
 import GyodokDetailPage from './pages/GyodokDetailPage';
-import LibraryPage    from './pages/LibraryPage';
-import MorePage       from './pages/MorePage';
-import ProfilePage    from './pages/ProfilePage';
+import LibraryPage      from './pages/LibraryPage';
+import MorePage         from './pages/MorePage';
+import ProfilePage      from './pages/ProfilePage';
 import AdminCreatePage  from './pages/admin/AdminCreatePage';
 import AdminManagePage  from './pages/admin/AdminManagePage';
 
@@ -21,11 +20,12 @@ function PrivateRoute({ children }) {
   return user ? children : <Navigate to="/login" replace />;
 }
 
+// 교독 관리(수정/삭제/추방)는 관리자 또는 방장만 — 라우트 레벨에선 로그인 여부만 체크
+// 방장 여부는 AdminManagePage 내부에서 처리
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
-  if (!user.isAdmin && !user.is_admin) return <Navigate to="/home" replace />;
   return children;
 }
 
@@ -57,15 +57,16 @@ export default function App() {
                 <PrivateRoute><ProfilePage /></PrivateRoute>
               } />
 
-              {/* 관리자 전용 */}
+              {/* 교독 생성 — 모든 로그인 유저 */}
               <Route path="/admin/create" element={
-                <AdminRoute><AdminCreatePage /></AdminRoute>
+                <PrivateRoute><AdminCreatePage /></PrivateRoute>
               } />
+
+              {/* 교독 관리 — 로그인 유저 (방장/관리자 여부는 페이지 내부에서 처리) */}
               <Route path="/admin/manage/:id" element={
                 <AdminRoute><AdminManagePage /></AdminRoute>
               } />
 
-              {/* 기본 리다이렉트 */}
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>

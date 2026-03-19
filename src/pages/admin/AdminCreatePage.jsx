@@ -13,6 +13,8 @@ export default function AdminCreatePage() {
   const [endDate,   setEndDate]   = useState('');
   const [saving,    setSaving]    = useState(false);
 
+  const isAdmin = user?.isAdmin || user?.is_admin;
+
   const handleCreate = async () => {
     if (!title.trim() || !startDate) return;
     setSaving(true);
@@ -38,7 +40,11 @@ export default function AdminCreatePage() {
 
   return (
     <div className="page">
-      <TopBar title="교독 생성" showBack right={isAdmin ? <AdminBadge /> : null} />
+      <TopBar
+        title="교독 생성"
+        showBack
+        right={isAdmin ? <AdminBadge /> : null}
+      />
       <div className="page-content fade-in">
 
         <FormSection label="교독 타이틀">
@@ -69,7 +75,6 @@ export default function AdminCreatePage() {
           />
         </FormSection>
 
-        {/* 안내 문구 — 중앙정렬 */}
         <div style={{
           padding: '10px 14px', borderRadius: 'var(--radius-sm)',
           background: 'var(--bg-surface-secondary)',
