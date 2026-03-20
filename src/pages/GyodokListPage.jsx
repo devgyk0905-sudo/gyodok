@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import TopBar from '../components/layout/TopBar';
 import BottomNav from '../components/layout/BottomNav';
-import { Pill, Spinner, EmptyState } from '../components/common';
+import { Pill, Spinner, EmptyState, SkeletonList, useToast } from '../components/common';
 import { getGyodoks, getFavorites, addFavorite, removeFavorite, getBooks } from '../supabase/db';
 
 const TABS = [
@@ -30,6 +30,7 @@ export default function GyodokListPage() {
   const [booksMap,  setBooksMap]  = useState({});  // gyodokId → books
   const [favIds,    setFavIds]    = useState([]);
   const [loading,   setLoading]   = useState(true);
+  const { showToast, toastEl } = useToast();
 
   useEffect(() => {
     if (!user) return;
@@ -56,13 +57,15 @@ export default function GyodokListPage() {
     if (isFav) {
       await removeFavorite(user.id, gyodokId);
       setFavIds(prev => prev.filter(id => id !== gyodokId));
+      showToast('즐겨찾기를 해제했습니다', 'error');
     } else {
       if (favIds.length >= 3) {
-        alert('즐겨찾기는 최대 3개까지 가능합니다.\n기존 즐겨찾기를 해제 후 추가해 주세요.');
+        showToast('즐겨찾기는 최대 3개까지 가능합니다', 'error');
         return;
       }
       await addFavorite(user.id, gyodokId);
       setFavIds(prev => [...prev, gyodokId]);
+      showToast('즐겨찾기에 추가했습니다', 'success');
     }
   };
 
@@ -77,6 +80,7 @@ export default function GyodokListPage() {
 
   return (
     <div className="page">
+      {toastEl}
       <TopBar
         title="교독"
         right={
@@ -117,7 +121,7 @@ export default function GyodokListPage() {
       </div>
 
       <div style={{ padding: '0 14px' }}>
-        {loading && <Spinner />}
+        {loading && <SkeletonList rows={4} />}
         {!loading && filtered.length === 0 && (
           <EmptyState message="교독 모임이 없습니다" sub={tab === 'all' ? '관리자가 모임을 생성하면 여기에 표시됩니다' : ''} />
         )}

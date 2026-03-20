@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 /* ===== Pill 배지 ===== */
 export function Pill({ variant = 'green', children, style }) {
@@ -305,6 +305,186 @@ export function Toast({ message, type = 'error' }) {
         </svg>
       )}
       {message}
+    </div>
+  );
+}
+
+/* ===== 스켈레톤 기본 블록 ===== */
+function SkeletonBlock({ width = '100%', height = 14, radius = 6, style }) {
+  return (
+    <div style={{
+      width, height,
+      borderRadius: radius,
+      background: 'var(--bg-surface-secondary)',
+      backgroundImage: 'linear-gradient(90deg, var(--bg-surface-secondary) 25%, var(--border-default) 50%, var(--bg-surface-secondary) 75%)',
+      backgroundSize: '200% 100%',
+      animation: 'skeletonShimmer 1.4s ease-in-out infinite',
+      flexShrink: 0,
+      ...style,
+    }} />
+  );
+}
+
+/* ===== 홈 카드 스켈레톤 ===== */
+export function SkeletonHomeCard() {
+  return (
+    <>
+      <style>{`
+        @keyframes skeletonShimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
+      {[0, 1].map(i => (
+        <div key={i} style={{
+          marginBottom: 20,
+          background: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '0.5px solid var(--border-default)',
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-card)',
+        }}>
+          {/* D-day 영역 */}
+          <div style={{ padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <SkeletonBlock width={80} height={10} />
+              <SkeletonBlock width={56} height={26} radius={4} />
+              <SkeletonBlock width={100} height={10} />
+            </div>
+            <SkeletonBlock width={46} height={18} radius={9} />
+          </div>
+          {/* 내 상태 영역 */}
+          <div style={{ padding: '14px 16px', borderTop: '0.5px solid var(--border-default)' }}>
+            <SkeletonBlock width={48} height={12} style={{ marginBottom: 10 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <SkeletonBlock width={32} height={32} radius={16} />
+              {[0, 1, 2].map(j => (
+                <SkeletonBlock key={j} width={44} height={60} radius={4} />
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <SkeletonBlock height={36} radius={8} />
+              <SkeletonBlock height={36} radius={8} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/* ===== 목록 행 스켈레톤 ===== */
+export function SkeletonList({ rows = 4 }) {
+  return (
+    <>
+      <style>{`
+        @keyframes skeletonShimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '12px 14px',
+          borderBottom: '0.5px solid var(--border-default)',
+        }}>
+          <SkeletonBlock width={44} height={60} radius={4} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <SkeletonBlock width="70%" height={13} />
+            <SkeletonBlock width="45%" height={11} />
+            <SkeletonBlock width={36} height={16} radius={8} />
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/* ===== useToast 훅 ===== */
+export function useToast() {
+  const [toast, setToast] = useState({ msg: '', type: 'error' });
+  const timerRef = useRef(null);
+
+  const showToast = useCallback((msg, type = 'success') => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setToast({ msg, type });
+    timerRef.current = setTimeout(() => setToast({ msg: '', type: 'error' }), 2800);
+  }, []);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  const toastEl = toast.msg ? <Toast message={toast.msg} type={toast.type} /> : null;
+  return { showToast, toastEl };
+}
+
+/* ===== Pull-to-refresh ===== */
+export function PullToRefresh({ onRefresh, children }) {
+  const [pulling, setPulling]   = useState(false);
+  const [pullY,   setPullY]     = useState(0);
+  const [loading, setLoading]   = useState(false);
+  const startY  = useRef(null);
+  const THRESHOLD = 64;
+
+  const handleTouchStart = (e) => {
+    const el = e.currentTarget;
+    if (el.scrollTop > 0) return;
+    startY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    if (startY.current === null) return;
+    const el = e.currentTarget;
+    if (el.scrollTop > 0) { startY.current = null; return; }
+    const dy = e.touches[0].clientY - startY.current;
+    if (dy > 0) {
+      setPulling(true);
+      setPullY(Math.min(dy * 0.45, THRESHOLD + 12));
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (!pulling) return;
+    if (pullY >= THRESHOLD) {
+      setLoading(true);
+      try { await onRefresh(); } finally { setLoading(false); }
+    }
+    setPulling(false);
+    setPullY(0);
+    startY.current = null;
+  };
+
+  return (
+    <div
+      style={{ overflowY: 'auto', flex: 1, position: 'relative' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* 당김 인디케이터 */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0,
+        display: 'flex', justifyContent: 'center', alignItems: 'center',
+        height: pullY,
+        overflow: 'hidden',
+        transition: pulling ? 'none' : 'height 0.25s ease',
+        zIndex: 10,
+      }}>
+        {(pulling || loading) && (
+          <div style={{
+            width: 28, height: 28,
+            border: '2px solid var(--border-default)',
+            borderTopColor: 'var(--accent-primary)',
+            borderRadius: '50%',
+            animation: loading ? 'spin 0.7s linear infinite' : 'none',
+            transform: loading ? 'none' : `rotate(${(pullY / THRESHOLD) * 270}deg)`,
+            transition: loading ? 'none' : 'transform 0.05s linear',
+          }} />
+        )}
+      </div>
+      <div style={{ transform: `translateY(${pullY}px)`, transition: pulling ? 'none' : 'transform 0.25s ease' }}>
+        {children}
+      </div>
     </div>
   );
 }

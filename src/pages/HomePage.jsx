@@ -6,6 +6,7 @@ import BottomNav from '../components/layout/BottomNav';
 import {
   Card, SectionHeader, Pill, Divider, Spinner, EmptyState,
   ProfileCircle, BookCover, StatusButton,
+  SkeletonHomeCard, useToast, PullToRefresh,
 } from '../components/common';
 import {
   getGyodoks, getBooks, getBookStatus, updateBookStatus,
@@ -27,6 +28,7 @@ export default function HomePage() {
   const [wishlist,     setWishlist]     = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [showProfileAlert, setShowProfileAlert] = useState(false);
+  const { showToast, toastEl } = useToast();
 
   useEffect(() => {
     if (!user) return;
@@ -103,6 +105,11 @@ export default function HomePage() {
     await updateBookStatus(gyodokId, myCurrentBook.id, user.id, updated);
 
     const feedTypes = { isRead: 'read', isSent: 'sent', isArrived: 'arrived' };
+    const toastLabels = {
+      isRead:    { on: '📖 다 읽었어요!', off: '읽기 완료를 취소했어요' },
+      isSent:    { on: '📦 발송 완료!',    off: '발송 완료를 취소했어요' },
+      isArrived: { on: '✅ 도착 확인!',    off: '도착 확인을 취소했어요' },
+    };
     if (updated[field]) {
       await addFeedItem({ gyodokId, userId: user.id, userName: user.name, type: feedTypes[field], bookTitle: myCurrentBook.title || '' });
     }
@@ -114,14 +121,24 @@ export default function HomePage() {
         [myCurrentBook.id]: { ...prev[gyodokId]?.[myCurrentBook.id], [user.id]: updated },
       },
     }));
+
+    const label = toastLabels[field];
+    if (label) showToast(updated[field] ? label.on : label.off, updated[field] ? 'success' : 'error');
   };
 
   if (loading) return (
-    <div className="page"><TopBar title="홈" /><Spinner /><BottomNav /></div>
+    <div className="page">
+      <TopBar title="홈" />
+      <div className="page-content">
+        <SkeletonHomeCard />
+      </div>
+      <BottomNav />
+    </div>
   );
 
   return (
     <div className="page">
+      {toastEl}
       <TopBar title="홈" />
 
       {/* 프로필 미완성 팝업 */}
@@ -163,6 +180,7 @@ export default function HomePage() {
         </div>
       )}
 
+      <PullToRefresh onRefresh={loadData}>
       <div className="page-content fade-in">
 
         {/* ── 즐겨찾기 없을 때 ── */}
@@ -309,6 +327,7 @@ export default function HomePage() {
 
         <div style={{ height: 16 }} />
       </div>
+      </PullToRefresh>
       <BottomNav />
     </div>
   );
