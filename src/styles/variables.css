@@ -1,50 +1,53 @@
 /* ===== 교독 디자인 토큰 ===== */
 
 :root {
-  /* 브랜드 컬러 (Golden Summer Fields 팔레트) */
-  --color-tea-green: #ccd5ae;
-  --color-beige: #e9edc9;
-  --color-cornsilk: #fefae0;
-  --color-papaya-whip: #faedcd;
-  --color-bronze: #d4a373;
+  /* 브랜드 컬러 (Pantone 2025 Soft Palette) */
+  --color-ice-melt:        #AECDE0;
+  --color-raindrops-roses: #E8CDD0;
+  --color-cloud-dancer:    #F0EDE8;
+  --color-almost-aqua:     #B8D4B8;
+  --color-lemon-icing:     #F5EFB8;
+  --color-peach-dust:      #E8CBBA;
+  --color-orchid-tint:     #D8D0DC;
+  --color-nimbus-cloud:    #D0CDD0;
 
   /* 시맨틱 — 라이트 모드 */
-  --bg-page: #fefae0;
-  --bg-surface: #ffffff;
-  --bg-surface-secondary: #f7f5ea;
-  --bg-card: #ffffff;
-  --bg-input: #ffffff;
+  --bg-page:               #F7F5F2;
+  --bg-surface:            #FFFFFF;
+  --bg-surface-secondary:  #F0EDE8;
+  --bg-card:               #FFFFFF;
+  --bg-input:              #FFFFFF;
 
-  --text-primary: #2e2416;
-  --text-secondary: #6a5a48;
-  --text-tertiary: #a89878;
-  --text-hint: #c8b898;
+  --text-primary:          #2E2C28;
+  --text-secondary:        #6A6660;
+  --text-tertiary:         #9A9690;
+  --text-hint:             #C0BCB8;
 
-  --border-default: #e9edc9;
-  --border-input: #d4c8b0;
-  --border-strong: #c8b898;
+  --border-default:        #E8E4E0;
+  --border-input:          #D8D4D0;
+  --border-strong:         #C0BCB8;
 
-  --accent-primary: #d4a373;
-  --accent-primary-hover: #c08858;
-  --accent-green: #ccd5ae;
-  --accent-green-dark: #3a4028;
-  --accent-amber: #faedcd;
-  --accent-amber-text: #7a5a20;
+  --accent-primary:        #AECDE0;   /* Ice Melt — CTA */
+  --accent-primary-hover:  #7EB0D0;
+  --accent-green:          #B8D4B8;   /* Almost Aqua */
+  --accent-green-dark:     #2A4A2A;
+  --accent-amber:          #F5EFB8;   /* Lemon Icing */
+  --accent-amber-text:     #6A5A10;
 
   /* 상태 컬러 */
-  --status-reading: #faedcd;
-  --status-reading-text: #7a5a20;
-  --status-done: #ccd5ae;
-  --status-done-text: #3a4028;
-  --status-pending: #e9e9e4;
-  --status-pending-text: #6a6a60;
-  --status-arrive: #faedcd;
-  --status-arrive-text: #7a5a20;
+  --status-reading:        #E8CDD0;   /* Raindrops on Roses */
+  --status-reading-text:   #7A4A50;
+  --status-done:           #B8D4B8;   /* Almost Aqua */
+  --status-done-text:      #2A4A2A;
+  --status-pending:        #D8D0DC;   /* Orchid Tint */
+  --status-pending-text:   #5A5060;
+  --status-arrive:         #F5EFB8;   /* Lemon Icing */
+  --status-arrive-text:    #6A5A10;
 
   /* 책 표현 */
-  --book-done-bg: #e0dcd0;
-  --book-current-bg: #ccd5ae;
-  --book-pending-bg: #ede9e0;
+  --book-done-bg:          #D0CDD0;   /* Nimbus Cloud */
+  --book-current-bg:       #AECDE0;   /* Ice Melt */
+  --book-pending-bg:       #E8E4E0;
   --book-height: 60px;
   --book-width: 44px;
   --book-radius: 4px;
@@ -56,12 +59,12 @@
   --radius-xl: 20px;
   --radius-full: 9999px;
 
-  --shadow-card: 0 1px 3px rgba(58, 46, 30, 0.06);
-  --shadow-modal: 0 -4px 24px rgba(58, 46, 30, 0.12);
+  --shadow-card:  0 1px 3px rgba(46, 44, 40, 0.06);
+  --shadow-modal: 0 -4px 24px rgba(46, 44, 40, 0.12);
 
   /* 모바일 컨테이너 */
   --app-width: 390px;
-  --bottom-nav-height: 72px;   /* 기존 60px → 72px */
+  --bottom-nav-height: 72px;
   --top-bar-height: 52px;
 
   /* 폰트 */
@@ -74,39 +77,41 @@
 
 /* ===== 다크 모드 ===== */
 [data-theme="dark"] {
-  --bg-page: #1a1810;
-  --bg-surface: #23201a;
-  --bg-surface-secondary: #2a271e;
-  --bg-card: #23201a;
-  --bg-input: #2a271e;
+  --bg-page:               #1E1C1A;
+  --bg-surface:            #272420;
+  --bg-surface-secondary:  #302D28;
+  --bg-card:               #272420;
+  --bg-input:              #302D28;
 
-  --text-primary: #f0e8d8;
-  --text-secondary: #a89878;
-  --text-tertiary: #6e6050;
-  --text-hint: #4a4030;
+  --text-primary:          #EDE8E2;
+  --text-secondary:        #A8A4A0;
+  --text-tertiary:         #6E6A66;
+  --text-hint:             #4A4642;
 
-  --border-default: #2e2b22;
-  --border-input: #3a3526;
-  --border-strong: #4a4030;
+  --border-default:        #38342E;
+  --border-input:          #443E38;
+  --border-strong:         #524C46;
 
-  --accent-primary: #c09060;
-  --accent-primary-hover: #d4a373;
-  --accent-green: #3a4028;
-  --accent-green-dark: #b8c890;
-  --accent-amber: #3a3020;
-  --accent-amber-text: #c8a060;
+  --accent-primary:        #7EB0D0;   /* Ice Melt 다크 */
+  --accent-primary-hover:  #AECDE0;
+  --accent-green:          #2A4A2A;
+  --accent-green-dark:     #B8D4B8;
+  --accent-amber:          #3A3818;
+  --accent-amber-text:     #C8B860;
 
-  --status-reading: #3a3020;
-  --status-reading-text: #c8a060;
-  --status-done: #3a4028;
-  --status-done-text: #b8c890;
-  --status-pending: #2e2b22;
-  --status-pending-text: #8a8070;
+  --status-reading:        #3A2A2C;
+  --status-reading-text:   #D8A0A8;
+  --status-done:           #1E3020;
+  --status-done-text:      #98C498;
+  --status-pending:        #302830;
+  --status-pending-text:   #9A90A0;
+  --status-arrive:         #3A3818;
+  --status-arrive-text:    #C8B860;
 
-  --book-done-bg: #2e2a22;
-  --book-current-bg: #3a4028;
-  --book-pending-bg: #252318;
+  --book-done-bg:          #38342E;
+  --book-current-bg:       #1E3040;
+  --book-pending-bg:       #302D28;
 
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-card:  0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-modal: 0 -4px 24px rgba(0, 0, 0, 0.4);
 }
