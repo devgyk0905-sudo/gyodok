@@ -135,12 +135,7 @@ export default function HomePage() {
   );
 
   return (
-    <div className="page">
-      <TopBar
-        title="홈"
-        notificationCount={pendingInvites.length}
-        onNotificationClick={() => setShowNotification(true)}
-      />
+    <div className="page-no-topbar">
 
       {/* 프로필 미완성 팝업 */}
       {showProfileAlert && (
@@ -181,14 +176,48 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── 홈 히어로 배너 (TopBar 바로 아래, 전체 너비) ── */}
+      {/* ── 홈 히어로 배너 (알림 아이콘 포함) ── */}
       <div style={{
         background: 'linear-gradient(135deg, var(--color-raindrops-roses, #E8CDD0) 0%, var(--color-cloud-dancer, #F0EDE8) 55%, var(--color-ice-melt, #AECDE0) 100%)',
         padding: '16px 14px 18px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
       }}>
-        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 3 }}>안녕하세요</div>
-        <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text-primary)' }}>{user?.name}님 👋</div>
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>오늘도 독서 중이신가요?</div>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text-primary)' }}>안녕하세요, {user?.name}님👋</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>오늘도 독서 중이신가요?</div>
+        </div>
+        <button
+          onClick={() => setShowNotification(true)}
+          style={{
+            position: 'relative', width: 36, height: 36,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 2,
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path
+              d="M11 2a6.5 6.5 0 00-6.5 6.5v3L3 14h16l-1.5-2.5V8.5A6.5 6.5 0 0011 2z"
+              stroke={pendingInvites.length > 0 ? 'var(--accent-primary)' : 'var(--text-secondary)'}
+              strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"
+            />
+            <path d="M9 17a2 2 0 004 0"
+              stroke={pendingInvites.length > 0 ? 'var(--accent-primary)' : 'var(--text-secondary)'}
+              strokeWidth="1.3"
+            />
+          </svg>
+          {pendingInvites.length > 0 && (
+            <div style={{
+              position: 'absolute', top: 4, right: 4,
+              width: 14, height: 14, borderRadius: '50%',
+              background: '#e76f51',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 8, color: '#fff', fontWeight: 700,
+              border: '1.5px solid var(--bg-page)',
+            }}>
+              {pendingInvites.length > 9 ? '9+' : pendingInvites.length}
+            </div>
+          )}
+        </button>
       </div>
 
       <div className="page-content fade-in">
