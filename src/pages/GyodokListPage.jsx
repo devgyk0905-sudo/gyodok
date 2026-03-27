@@ -99,8 +99,8 @@ export default function GyodokListPage() {
             onClick={() => navigate('/admin/create')}
             style={{
               padding: '5px 12px', borderRadius: 'var(--radius-full)',
-              background: 'var(--accent-amber)', border: '0.5px solid var(--border-strong)',
-              fontSize: 12, color: 'var(--accent-amber-text)', fontWeight: 500,
+              background: 'var(--color-orchid-tint)', border: '0.5px solid var(--border-strong)',
+              fontSize: 12, color: '#5A5060', fontWeight: 500,
               cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
             }}
           >
@@ -147,9 +147,9 @@ export default function GyodokListPage() {
             style={{
               flexShrink: 0, padding: '5px 14px',
               borderRadius: 'var(--radius-full)', fontSize: 12, fontWeight: 500,
-              border: `0.5px solid ${tab === t.key ? 'var(--accent-green)' : 'var(--border-input)'}`,
-              background: tab === t.key ? 'var(--accent-green)' : 'var(--bg-page)',
-              color: tab === t.key ? 'var(--accent-green-dark)' : 'var(--text-tertiary)',
+              border: `0.5px solid ${tab === t.key ? 'var(--accent-primary)' : 'var(--border-input)'}`,
+              background: tab === t.key ? 'var(--accent-primary)' : 'var(--bg-page)',
+              color: tab === t.key ? '#fff' : 'var(--text-tertiary)',
               cursor: 'pointer', transition: 'all var(--transition-fast)', fontFamily: 'var(--font-sans)',
             }}
           >
