@@ -111,15 +111,34 @@ export function BookCover({
   );
 }
 
-/* ===== 프로필 원형 ===== */
+/* ===== 프로필 원형 =====
+   isMe  → Ice Melt 파랑
+   그 외 → 이름 첫 글자 코드 기반으로 파랑 / 분홍 / 보라 순환
+           (초록 완전 제거)
+*/
+const MEMBER_COLORS = [
+  { bg: '#D6E2F5', color: '#2A5068' }, // 파랑 (SE Light)
+  { bg: '#E8CDD0', color: '#7A4A50' }, // 분홍 (Raindrops)
+  { bg: '#D8D0DC', color: '#5A5060' }, // 보라 (Orchid Tint)
+  { bg: '#E8CBBA', color: '#7A4A38' }, // 피치 (Peach Dust)
+];
+
+function getMemberColor(name) {
+  if (!name) return MEMBER_COLORS[0];
+  const code = name.charCodeAt(0) || 0;
+  return MEMBER_COLORS[code % MEMBER_COLORS.length];
+}
+
 export function ProfileCircle({ name, isMe = false, size = 28, style }) {
   const initial = name ? name.charAt(0) : '?';
+  const memberColor = getMemberColor(name);
+
   return (
     <div style={{
       width: size, height: size,
       borderRadius: '50%',
-      background: isMe ? 'var(--accent-primary)' : 'var(--accent-green)',
-      color: isMe ? '#fff' : 'var(--accent-green-dark)',
+      background: isMe ? 'var(--accent-primary)' : memberColor.bg,
+      color: isMe ? '#fff' : memberColor.color,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: size * 0.38, fontWeight: 500,
       flexShrink: 0,
@@ -130,7 +149,9 @@ export function ProfileCircle({ name, isMe = false, size = 28, style }) {
   );
 }
 
-/* ===== 상태 버튼 (다 읽었어요 / 발송했어요 / 도착했어요) ===== */
+/* ===== 상태 버튼 (다 읽었어요 / 발송했어요 / 도착했어요) =====
+   활성 시 → Ice Melt 파랑 + ✓ 체크 표시
+*/
 export function StatusButton({ label, active = false, disabled = false, onClick, style }) {
   return (
     <button
@@ -139,17 +160,23 @@ export function StatusButton({ label, active = false, disabled = false, onClick,
         flex: 1,
         height: 36,
         borderRadius: 'var(--radius-sm)',
-        border: `0.5px solid ${active ? 'var(--accent-green)' : 'var(--border-input)'}`,
-        background: active ? 'var(--status-done)' : 'var(--bg-surface-secondary)',
-        color: active ? 'var(--status-done-text)' : 'var(--text-tertiary)',
+        border: `0.5px solid ${active ? 'var(--accent-primary)' : 'var(--border-input)'}`,
+        background: active ? 'var(--accent-primary)' : 'var(--bg-surface-secondary)',
+        color: active ? '#fff' : 'var(--text-tertiary)',
         fontSize: 12, fontWeight: active ? 500 : 400,
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled ? 0.36 : 1,
         transition: 'all var(--transition-fast)',
         fontFamily: 'var(--font-sans)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
         ...style,
       }}
     >
+      {active && (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )}
       {label}
     </button>
   );
@@ -273,8 +300,8 @@ export function EmptyState({ message, sub }) {
 /* ===== 토스트 메시지 ===== */
 export function Toast({ message, type = 'error' }) {
   if (!message) return null;
-  const bg    = type === 'success' ? '#87965c' : '#e76f51';
-  const color = type === 'success' ? '#f0f5e8' : '#fff5f2';
+  const bg    = type === 'success' ? '#6A9EB8' : '#e76f51';
+  const color = '#fff';
   return (
     <div style={{
       position: 'fixed',

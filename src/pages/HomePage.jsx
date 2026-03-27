@@ -188,6 +188,7 @@ export default function HomePage() {
       }}>
         <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 3 }}>안녕하세요</div>
         <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text-primary)' }}>{user?.name}님 👋</div>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>오늘도 독서 중이신가요?</div>
       </div>
 
       <div className="page-content fade-in">

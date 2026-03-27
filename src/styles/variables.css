@@ -12,7 +12,7 @@
   --color-nimbus-cloud:    #D0CDD0;
 
   /* 시맨틱 — 라이트 모드 */
-  --bg-page:               #F7F5F2;
+  --bg-page:               #ECEAE6;
   --bg-surface:            #FFFFFF;
   --bg-surface-secondary:  #F0EDE8;
   --bg-card:               #FFFFFF;
@@ -37,8 +37,8 @@
   /* 상태 컬러 */
   --status-reading:        #E8CDD0;   /* Raindrops on Roses */
   --status-reading-text:   #7A4A50;
-  --status-done:           #B8D4B8;   /* Almost Aqua */
-  --status-done-text:      #2A4A2A;
+  --status-done:           #AECDE0;   /* Ice Melt — 완료 버튼 활성 */
+  --status-done-text:      #2A5068;
   --status-pending:        #D8D0DC;   /* Orchid Tint */
   --status-pending-text:   #5A5060;
   --status-arrive:         #F5EFB8;   /* Lemon Icing */
