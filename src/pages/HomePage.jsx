@@ -181,6 +181,15 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* ── 홈 히어로 배너 (TopBar 바로 아래, 전체 너비) ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, var(--color-raindrops-roses, #E8CDD0) 0%, var(--color-cloud-dancer, #F0EDE8) 55%, var(--color-ice-melt, #AECDE0) 100%)',
+        padding: '16px 14px 18px',
+      }}>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 3 }}>안녕하세요</div>
+        <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text-primary)' }}>{user?.name}님 👋</div>
+      </div>
+
       <div className="page-content fade-in">
 
         {/* 초대 배너 */}

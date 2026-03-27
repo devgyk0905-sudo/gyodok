@@ -152,29 +152,34 @@ export default function LibraryPage() {
 
   return (
     <div className="page">
-      {/* ── TopBar: Pantone 2025 그라데이션 ── */}
-      <TopBar
-        title="내 서재"
-        background="linear-gradient(135deg, var(--raindrops-roses, #E8CDD0) 0%, var(--cloud-dancer, #F0EDE8) 55%, var(--se-light, #D6E2F5) 100%)"
-        titleColor="var(--text-primary)"
-        right={
-          <button
-            onClick={() => setShowSearch(true)}
-            style={{
-              padding: '5px 12px', borderRadius: 'var(--radius-full)',
-              background: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(255,255,255,0.9)',
-              fontSize: 12, color: 'var(--text-primary)', fontWeight: 500,
-              cursor: 'pointer', fontFamily: 'var(--font-sans)',
-              display: 'flex', alignItems: 'center', gap: 5,
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M6 1v10M1 6h10" stroke="var(--text-primary)" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
-            책 추가
-          </button>
-        }
-      />
+      <TopBar title="내 서재" />
+
+      {/* ── 서재 히어로 배너 ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, var(--color-raindrops-roses, #E8CDD0) 0%, var(--color-cloud-dancer, #F0EDE8) 55%, var(--color-ice-melt, #AECDE0) 100%)',
+        padding: '16px 14px 18px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+      }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 3 }}>내 서재</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>읽은 책과 읽고 싶은 책을 모아보세요</div>
+        </div>
+        <button
+          onClick={() => setShowSearch(true)}
+          style={{
+            padding: '6px 12px', borderRadius: 'var(--radius-full)',
+            background: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(255,255,255,0.9)',
+            fontSize: 12, color: 'var(--text-primary)', fontWeight: 500,
+            cursor: 'pointer', fontFamily: 'var(--font-sans)',
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1v10M1 6h10" stroke="var(--text-primary)" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          책 추가
+        </button>
+      </div>
 
       {/* 탭 */}
       <div style={{ display: 'flex', gap: 6, padding: '10px 14px', borderBottom: '0.5px solid var(--border-default)', background: 'var(--bg-page)' }}>
