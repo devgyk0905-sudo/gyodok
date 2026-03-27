@@ -27,7 +27,6 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  /* 앱 너비보다 넓은 화면에서만 회색 여백 표시 */
   background: var(--bg-page);
 }
 
@@ -50,10 +49,18 @@ body {
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.12);
 }
 
-/* 페이지 공통 */
+/* 페이지 공통 — TopBar 있는 페이지 */
 .page {
   min-height: 100vh;
-  padding-top: var(--top-bar-height); /* fixed TopBar 높이만큼 여백 */
+  padding-top: var(--top-bar-height);
+  padding-bottom: var(--bottom-nav-height);
+  background: var(--bg-page);
+}
+
+/* 페이지 공통 — TopBar 없는 페이지 (홈, 서재) */
+.page-no-topbar {
+  min-height: 100vh;
+  padding-top: 0;
   padding-bottom: var(--bottom-nav-height);
   background: var(--bg-page);
 }
