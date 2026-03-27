@@ -152,24 +152,24 @@ export default function LibraryPage() {
 
   return (
     <div className="page">
-      {/* 그라데이션 TopBar */}
+      {/* ── TopBar: Pantone 2025 그라데이션 ── */}
       <TopBar
         title="내 서재"
-        background="linear-gradient(135deg, #ccd5ae 0%, #e9edc9 60%, #fefae0 100%)"
-        titleColor="#3a4028"
+        background="linear-gradient(135deg, var(--raindrops-roses, #E8CDD0) 0%, var(--cloud-dancer, #F0EDE8) 55%, var(--se-light, #D6E2F5) 100%)"
+        titleColor="var(--text-primary)"
         right={
           <button
             onClick={() => setShowSearch(true)}
             style={{
               padding: '5px 12px', borderRadius: 'var(--radius-full)',
               background: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(255,255,255,0.9)',
-              fontSize: 12, color: '#3a4028', fontWeight: 500,
+              fontSize: 12, color: 'var(--text-primary)', fontWeight: 500,
               cursor: 'pointer', fontFamily: 'var(--font-sans)',
               display: 'flex', alignItems: 'center', gap: 5,
             }}
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M6 1v10M1 6h10" stroke="#3a4028" strokeWidth="1.4" strokeLinecap="round"/>
+              <path d="M6 1v10M1 6h10" stroke="var(--text-primary)" strokeWidth="1.4" strokeLinecap="round"/>
             </svg>
             책 추가
           </button>
@@ -182,8 +182,8 @@ export default function LibraryPage() {
           <button key={t.key} onClick={() => setTab(t.key)} style={{
             padding: '4px 12px', borderRadius: 'var(--radius-full)',
             fontSize: 12, fontWeight: 500, border: '0.5px solid transparent',
-            background: tab === t.key ? 'var(--accent-green)' : 'transparent',
-            color: tab === t.key ? 'var(--accent-green-dark)' : 'var(--text-tertiary)',
+            background: tab === t.key ? 'var(--accent-primary)' : 'transparent',
+            color: tab === t.key ? '#fff' : 'var(--text-tertiary)',
             cursor: 'pointer', fontFamily: 'var(--font-sans)',
           }}>{t.label}</button>
         ))}
@@ -253,7 +253,8 @@ function BookItem({ book, onClick }) {
         {book._wishId && (
           <div style={{ position: 'absolute', top: 4, right: 4 }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 1.5l1.4 2.8 3.1.45-2.25 2.2.53 3.1L7 8.6l-2.78 1.45.53-3.1L2.5 4.75l3.1-.45z" fill="#d4a373" stroke="#d4a373" strokeWidth="0.5" strokeLinejoin="round"/>
+              {/* Pantone 2025: Lemon Icing 별 */}
+              <path d="M7 1.5l1.4 2.8 3.1.45-2.25 2.2.53 3.1L7 8.6l-2.78 1.45.53-3.1L2.5 4.75l3.1-.45z" fill="var(--lemon-icing, #F5EFB8)" stroke="var(--accent-amber-text, #6A5A10)" strokeWidth="0.5" strokeLinejoin="round"/>
             </svg>
           </div>
         )}
@@ -293,7 +294,7 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 24px' }}>
           <div style={{ display: 'flex', gap: 14, marginBottom: 14, alignItems: 'flex-start' }}>
-            <div style={{ width: 72, height: 98, borderRadius: 8, background: 'var(--accent-green)', flexShrink: 0, overflow: 'hidden' }}>
+            <div style={{ width: 72, height: 98, borderRadius: 8, background: 'var(--accent-primary)', flexShrink: 0, overflow: 'hidden' }}>
               {book.coverUrl && <img src={book.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
             <div style={{ flex: 1 }}>
@@ -319,21 +320,21 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 500, marginBottom: 10 }}>위시리스트</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               {isInWish ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', background: '#faedcd', borderRadius: 20, border: '0.5px solid #e9c97a' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', background: 'var(--accent-amber)', borderRadius: 20, border: '0.5px solid var(--border-strong)' }}>
                   <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                    <path d="M6.5 1.5l1.3 2.6 2.9.4-2.1 2 .5 2.9-2.6-1.4-2.6 1.4.5-2.9-2.1-2 2.9-.4z" fill="#d4a373" stroke="#d4a373" strokeWidth="0.5" strokeLinejoin="round"/>
+                    <path d="M6.5 1.5l1.3 2.6 2.9.4-2.1 2 .5 2.9-2.6-1.4-2.6 1.4.5-2.9-2.1-2 2.9-.4z" fill="var(--lemon-icing, #F5EFB8)" stroke="var(--accent-amber-text)" strokeWidth="0.5" strokeLinejoin="round"/>
                   </svg>
-                  <span style={{ fontSize: 11, color: '#7a5a20', fontWeight: 500 }}>위시리스트에 있음</span>
+                  <span style={{ fontSize: 11, color: 'var(--accent-amber-text)', fontWeight: 500 }}>위시리스트에 있음</span>
                 </div>
               ) : (
                 <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>위시리스트에 없음</span>
               )}
               <button onClick={onWishToggle} style={{
                 padding: '5px 14px', borderRadius: 20,
-                background: isInWish ? 'var(--bg-surface-secondary)' : '#faedcd',
-                border: isInWish ? '0.5px solid var(--border-input)' : '0.5px solid #e9c97a',
+                background: isInWish ? 'var(--bg-surface-secondary)' : 'var(--accent-amber)',
+                border: isInWish ? '0.5px solid var(--border-input)' : '0.5px solid var(--border-strong)',
                 fontSize: 11, fontWeight: 500,
-                color: isInWish ? 'var(--text-tertiary)' : '#7a5a20',
+                color: isInWish ? 'var(--text-tertiary)' : 'var(--accent-amber-text)',
                 cursor: 'pointer', fontFamily: 'var(--font-sans)',
               }}>
                 {isInWish ? '해제' : '+ 위시 추가'}
@@ -343,15 +344,15 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
 
           <Divider />
 
-          {/* 교독에 추가 + 내 서재에서 삭제하기 */}
+          {/* 교독에 추가 + 삭제 */}
           <div style={{ display: 'flex', gap: 8, margin: '12px 0 16px' }}>
             <button
               onClick={() => setShowGyodokPicker(true)}
               style={{
                 flex: 1, height: 42, borderRadius: 'var(--radius-md)',
-                background: 'var(--accent-green)',
-                border: '0.5px solid var(--border-default)',
-                fontSize: 12, color: 'var(--accent-green-dark)', fontWeight: 500,
+                background: 'var(--accent-primary)',
+                border: 'none',
+                fontSize: 12, color: '#fff', fontWeight: 500,
                 cursor: 'pointer', fontFamily: 'var(--font-sans)',
               }}
             >
@@ -382,7 +383,7 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
             ) : (
               gyodokRecords.map((rec, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < gyodokRecords.length - 1 ? '0.5px solid var(--border-default)' : 'none' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: rec.gyodokStatus === 'active' ? 'var(--accent-green)' : 'var(--border-strong)' }} />
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: rec.gyodokStatus === 'active' ? 'var(--accent-primary)' : 'var(--border-strong)' }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>{rec.gyodokTitle}</div>
                     <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2 }}>
@@ -391,8 +392,8 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
                   </div>
                   <span style={{
                     padding: '2px 8px', borderRadius: 10, fontSize: 9, fontWeight: 500,
-                    background: rec.gyodokStatus === 'active' ? 'var(--accent-green)' : rec.gyodokStatus === 'upcoming' ? 'var(--accent-amber)' : 'var(--bg-surface-secondary)',
-                    color: rec.gyodokStatus === 'active' ? 'var(--accent-green-dark)' : rec.gyodokStatus === 'upcoming' ? 'var(--accent-amber-text)' : 'var(--text-tertiary)',
+                    background: rec.gyodokStatus === 'active' ? 'var(--status-reading)' : rec.gyodokStatus === 'upcoming' ? 'var(--accent-amber)' : 'var(--bg-surface-secondary)',
+                    color: rec.gyodokStatus === 'active' ? 'var(--status-reading-text)' : rec.gyodokStatus === 'upcoming' ? 'var(--accent-amber-text)' : 'var(--text-tertiary)',
                   }}>
                     {rec.gyodokStatus === 'active' ? '진행 중' : rec.gyodokStatus === 'upcoming' ? '예정' : '종료'}
                   </span>
@@ -422,7 +423,7 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{g.title}</div>
                     <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2 }}>{g.status === 'active' ? '진행 중' : '예정'} · {g.startDate?.slice(0,10)}</div>
                   </div>
-                  <span style={{ padding: '3px 10px', borderRadius: 10, fontSize: 10, fontWeight: 500, background: g.status === 'active' ? 'var(--accent-green)' : 'var(--accent-amber)', color: g.status === 'active' ? 'var(--accent-green-dark)' : 'var(--accent-amber-text)' }}>
+                  <span style={{ padding: '3px 10px', borderRadius: 10, fontSize: 10, fontWeight: 500, background: g.status === 'active' ? 'var(--status-reading)' : 'var(--accent-amber)', color: g.status === 'active' ? 'var(--status-reading-text)' : 'var(--accent-amber-text)' }}>
                     {g.status === 'active' ? '진행 중' : '예정'}
                   </span>
                 </div>
@@ -497,7 +498,7 @@ function BookSearchSheet({ onClose, userId, onAddWish, onAddWishError }) {
           {results.length > 0 && <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginBottom: 8 }}>검색 결과 {results.length}건</div>}
           {results.map((book, i) => (
             <div key={book.isbn || i} style={{ display: 'flex', gap: 10, padding: '10px 0', borderBottom: i < results.length - 1 ? '0.5px solid var(--border-default)' : 'none', alignItems: 'flex-start' }}>
-              <div style={{ width: 46, height: 62, borderRadius: 5, border: '0.5px solid var(--border-input)', flexShrink: 0, overflow: 'hidden', background: 'var(--accent-green)' }}>
+              <div style={{ width: 46, height: 62, borderRadius: 5, border: '0.5px solid var(--border-input)', flexShrink: 0, overflow: 'hidden', background: 'var(--bg-surface-secondary)' }}>
                 {book.coverUrl && <img src={book.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -505,7 +506,7 @@ function BookSearchSheet({ onClose, userId, onAddWish, onAddWishError }) {
                 <div style={{ fontSize: 10, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>{book.author} · {book.publisher}<br />{book.publishDate}</div>
                 {book.price > 0 && <div style={{ fontSize: 11, color: '#185fa5', fontWeight: 500, marginTop: 2 }}>{book.price.toLocaleString()}원</div>}
                 <div style={{ display: 'flex', gap: 5, marginTop: 7 }}>
-                  <button onClick={() => setSelected(book)} style={{ flex: 1, height: 28, borderRadius: 7, background: 'var(--accent-green)', border: '0.5px solid var(--border-default)', fontSize: 10, color: 'var(--accent-green-dark)', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>상세 보기</button>
+                  <button onClick={() => setSelected(book)} style={{ flex: 1, height: 28, borderRadius: 7, background: 'var(--accent-primary)', border: 'none', fontSize: 10, color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>상세 보기</button>
                   <button onClick={() => handleAddWish(book)} style={{ flex: 1, height: 28, borderRadius: 7, background: 'var(--bg-surface-secondary)', border: '0.5px solid var(--border-input)', fontSize: 10, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>위시에 추가</button>
                 </div>
               </div>
@@ -525,7 +526,7 @@ function BookSearchSheet({ onClose, userId, onAddWish, onAddWishError }) {
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px 20px' }}>
               <div style={{ display: 'flex', gap: 12, marginBottom: 14, alignItems: 'flex-start' }}>
-                <div style={{ width: 62, height: 84, borderRadius: 8, flexShrink: 0, overflow: 'hidden', background: 'var(--accent-green)' }}>
+                <div style={{ width: 62, height: 84, borderRadius: 8, flexShrink: 0, overflow: 'hidden', background: 'var(--bg-surface-secondary)' }}>
                   {selected.coverUrl && <img src={selected.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                 </div>
                 <div>
@@ -536,7 +537,7 @@ function BookSearchSheet({ onClose, userId, onAddWish, onAddWishError }) {
               </div>
               <Divider />
               {selected.description && <div style={{ marginBottom: 16 }}><div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6 }}>책 소개</div><div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{selected.description}</div></div>}
-              <button onClick={() => { handleAddWish(selected); setSelected(null); }} style={{ width: '100%', height: 40, borderRadius: 'var(--radius-md)', background: 'var(--accent-green)', border: '0.5px solid var(--border-default)', fontSize: 13, color: 'var(--accent-green-dark)', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+              <button onClick={() => { handleAddWish(selected); setSelected(null); }} style={{ width: '100%', height: 40, borderRadius: 'var(--radius-md)', background: 'var(--accent-primary)', border: 'none', fontSize: 13, color: '#fff', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
                 위시리스트에 추가
               </button>
             </div>

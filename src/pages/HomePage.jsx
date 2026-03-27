@@ -234,7 +234,6 @@ export default function HomePage() {
           const cp = getNextCheckpoint(g.checkpoints);
           const dd = cp ? calcDday(cp.date) : null;
 
-          // 개인별 현재 차수 기준으로 내 책 찾기
           const personalRound  = getPersonalCurrentRound(user.id, bks, sm, totalRounds);
           const myCurrentBook  = bks.find(b => b.round === personalRound && b.exchangeOrder?.includes(user.id));
           const myStatus       = myCurrentBook ? sm[myCurrentBook.id]?.[user.id] : null;
@@ -248,21 +247,22 @@ export default function HomePage() {
               borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-default)',
               overflow: 'hidden', boxShadow: 'var(--shadow-card)',
             }}>
+              {/* ── D-day 헤더 (Pantone 2025) ── */}
               <div
                 onClick={() => navigate(`/gyodok/${g.id}`)}
                 style={{
-                  background: 'linear-gradient(135deg, #ccd5ae 0%, #faedcd 60%, #fefae0 100%)',
+                  background: 'linear-gradient(135deg, var(--rq-base, #E8CDD0) 0%, var(--cloud-dancer, #F0EDE8) 55%, var(--ice-melt, #AECDE0) 100%)',
                   padding: '14px 16px', display: 'flex', justifyContent: 'space-between',
                   alignItems: 'center', cursor: 'pointer',
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 10, color: '#5a6030', lineHeight: 1.8 }}>{g.title}</div>
-                  <div style={{ fontSize: 26, fontWeight: 500, color: '#3a4028', lineHeight: 1.1 }}>{dd || '—'}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', lineHeight: 1.8 }}>{g.title}</div>
+                  <div style={{ fontSize: 26, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.1 }}>{dd || '—'}</div>
                   {cp && (
-                    <div style={{ fontSize: 10, color: '#5a6030', lineHeight: 1.8 }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
                       ~ {cp.date}<br />
-                      <span style={{ color: '#3a4028', fontWeight: 500 }}>{cp.label}</span>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{cp.label}</span>
                     </div>
                   )}
                 </div>
@@ -270,7 +270,7 @@ export default function HomePage() {
                   <Pill variant={g.status === 'active' ? 'green' : g.status === 'upcoming' ? 'amber' : 'gray'}>
                     {g.status === 'active' ? '진행 중' : g.status === 'upcoming' ? '예정' : '종료'}
                   </Pill>
-                  <div style={{ fontSize: 10, color: '#3a4028', fontWeight: 500, marginTop: 2 }}>{gs.statusText}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-primary)', fontWeight: 500, marginTop: 2 }}>{gs.statusText}</div>
                 </div>
               </div>
 
@@ -284,7 +284,6 @@ export default function HomePage() {
                 </div>
                 <MyBooksRow books={bks} currentRound={personalRound} userId={user.id} totalRounds={totalRounds} />
 
-                {/* 1차: 읽기 + 발송 */}
                 {isFirstRound && (
                   <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                     <StatusButton label="다 읽었어요!" active={!!myStatus?.isRead} onClick={() => handleStatusChange(g.id, 'isRead')} />
@@ -292,7 +291,6 @@ export default function HomePage() {
                   </div>
                 )}
 
-                {/* 중간차: 도착(풀) → 읽기 + 발송 */}
                 {isMidRound && (
                   <>
                     <div style={{ display: 'flex', marginTop: 8, marginBottom: 6 }}>
@@ -308,7 +306,6 @@ export default function HomePage() {
                   </>
                 )}
 
-                {/* 마지막차: 도착(풀) + 읽기 */}
                 {isLastRound && (
                   <>
                     <div style={{ display: 'flex', marginTop: 8, marginBottom: 6 }}>
@@ -346,23 +343,27 @@ export default function HomePage() {
           );
         })}
 
-        {/* 위시리스트 */}
+        {/* 위시리스트 — 커버 가로 나열 */}
         <SectionHeader>내 다음 책 후보</SectionHeader>
-        <Card style={{ padding: '8px 12px' }}>
-          {wishlist.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '16px 0' }}>
-              <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4 }}>위시리스트가 비어 있습니다</div>
-              <div style={{ fontSize: 11, color: 'var(--text-hint)' }}>서재에서 읽고 싶은 책을 추가해 보세요</div>
-            </div>
-          ) : (
-            <>
-              {wishlist.map((item, idx) => (
-                <WishItem key={item.id} item={item} isLast={idx === wishlist.length - 1} />
-              ))}
-              <div style={{ fontSize: 10, color: 'var(--text-hint)', textAlign: 'right', marginTop: 6 }}>최신 5개 표시</div>
-            </>
-          )}
-        </Card>
+        {wishlist.length === 0 ? (
+          <div style={{
+            background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
+            border: '0.5px solid var(--border-default)', padding: '16px',
+            textAlign: 'center', boxShadow: 'var(--shadow-card)',
+          }}>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4 }}>위시리스트가 비어 있습니다</div>
+            <div style={{ fontSize: 11, color: 'var(--text-hint)' }}>서재에서 읽고 싶은 책을 추가해 보세요</div>
+          </div>
+        ) : (
+          <div style={{
+            display: 'flex', gap: 10, overflowX: 'auto',
+            paddingBottom: 4,
+          }}>
+            {wishlist.slice(0, 5).map(item => (
+              <WishCoverItem key={item.id} item={item} />
+            ))}
+          </div>
+        )}
 
         <div style={{ height: 16 }} />
       </div>
@@ -398,7 +399,6 @@ function MyBooksRow({ books, currentRound, userId, totalRounds }) {
 }
 
 function MemberRow({ userId, userName, books, allStatuses, isMe, isLast, totalRounds }) {
-  // 개인별 현재 차수 기준으로 상태 표시
   const personalRound = getPersonalCurrentRound(userId, books, allStatuses, totalRounds);
   const currentBook = books.find(b => b.round === personalRound && b.exchangeOrder?.includes(userId));
   const status = currentBook ? allStatuses[currentBook.id]?.[userId] : null;
@@ -431,16 +431,29 @@ function MemberRow({ userId, userName, books, allStatuses, isMe, isLast, totalRo
   );
 }
 
-function WishItem({ item, isLast }) {
+// 위시리스트 — 커버 카드만 표시
+function WishCoverItem({ item }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: isLast ? 'none' : '0.5px solid var(--border-default)' }}>
-      <div style={{ width: 26, height: 36, borderRadius: 3, background: item.coverUrl ? 'transparent' : 'var(--accent-amber)', flexShrink: 0, overflow: 'hidden' }}>
-        {item.coverUrl && <img src={item.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+      <div style={{
+        width: 52, height: 72, borderRadius: 7,
+        background: 'var(--bg-surface-secondary)',
+        border: '0.5px solid var(--border-input)',
+        overflow: 'hidden', flexShrink: 0,
+        boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+      }}>
+        {item.coverUrl
+          ? <img src={item.coverUrl} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <div style={{ width: '100%', height: '100%', background: 'var(--accent-amber)' }} />
+        }
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>{item.title}</div>
-        <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{item.author}</div>
-        <div style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{item.publisher}</div>
+      <div style={{
+        fontSize: 9, color: 'var(--text-secondary)', textAlign: 'center',
+        maxWidth: 52, lineHeight: 1.3,
+        display: '-webkit-box', WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical', overflow: 'hidden',
+      }}>
+        {item.title}
       </div>
     </div>
   );
