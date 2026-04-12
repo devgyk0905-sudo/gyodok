@@ -414,14 +414,15 @@ function CollageImage({ books }) {
   );
 }
 
+// GyodokDetailPage.jsx 내 BookStatusBadge 함수만 교체
 function BookStatusBadge({ round, currentRound, status }) {
   if (round < currentRound) return <Pill variant="gray" style={{ fontSize: 8, padding: '1px 5px' }}>완료</Pill>;
   if (round > currentRound) return <span style={{ fontSize: 8, color: 'var(--text-hint)' }}>예정</span>;
   if (!status)              return <Pill variant="gray" style={{ fontSize: 8, padding: '1px 5px' }}>미시작</Pill>;
-  if (status.isArrived)     return <Pill variant="green" style={{ fontSize: 8, padding: '1px 5px' }}>교환완료</Pill>;
   if (status.isSent)        return <Pill variant="green" style={{ fontSize: 8, padding: '1px 5px' }}>발송</Pill>;
-  if (status.isRead)        return <Pill variant="green" style={{ fontSize: 8, padding: '1px 5px' }}>완독</Pill>;
-  return <Pill variant="amber" style={{ fontSize: 8, padding: '1px 5px' }}>읽는 중</Pill>;
+  if (status.isRead)        return <Pill variant="amber" style={{ fontSize: 8, padding: '1px 5px' }}>완독</Pill>;
+  if (status.isArrived)     return <Pill variant="amber" style={{ fontSize: 8, padding: '1px 5px' }}>받음</Pill>;
+  return <Pill variant="gray" style={{ fontSize: 8, padding: '1px 5px' }}>읽는 중</Pill>;
 }
 
 function BookFullSheet({ book, status, ownerUserId, currentUserId, ownerName,

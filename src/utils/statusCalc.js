@@ -3,14 +3,22 @@
 export function getPersonalCurrentRound(userId, books, allStatuses, totalRounds) {
   for (let round = 1; round <= totalRounds; round++) {
     const book = books.find(b => b.round === round && b.exchangeOrder?.includes(userId));
-    if (!book) return round; // 책 미등록 = 아직 이 차수
+    if (!book) return round;
     const st = allStatuses?.[book.id]?.[userId];
+    const isFirstRound = round === 1;
     const isLastRound = round === totalRounds;
-    if (isLastRound) {
-      if (st?.isRead) continue; // 마지막 차수: 완독이면 완료
+
+    if (isFirstRound) {
+      // 1차: 완독 + 발송 둘 다 있어야 완료
+      if (st?.isRead && st?.isSent) continue;
+      return round;
+    } else if (isLastRound) {
+      // 마지막: 도착 + 완독 둘 다 있어야 완료
+      if (st?.isArrived && st?.isRead) continue;
       return round;
     } else {
-      if (st?.isArrived) continue; // 1차~중간: 도착했어요 = 완료
+      // 중간: 도착 + 완독 + 발송 모두 있어야 완료
+      if (st?.isArrived && st?.isRead && st?.isSent) continue;
       return round;
     }
   }
@@ -107,4 +115,14 @@ export function getNextCheckpoint(checkpoints) {
     .filter(cp => cp.date && new Date(cp.date) >= now)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   return upcoming[0] || checkpoints[checkpoints.length - 1];
+}
+
+// 라운드 완료 여부 판단
+export function isRoundComplete(round, totalRounds, status) {
+  if (!status) return false;
+  const isFirst = round === 1;
+  const isLast = round === totalRounds;
+  if (isFirst) return !!(status.isRead && status.isSent);
+  if (isLast) return !!(status.isArrived && status.isRead);
+  return !!(status.isArrived && status.isRead && status.isSent);
 }

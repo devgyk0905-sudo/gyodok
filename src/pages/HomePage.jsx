@@ -16,7 +16,7 @@ import {
 import {
   calcGyodokStatus, getMyStatusText, getMemberStatus,
   getBookCardState, calcDday, getNextCheckpoint,
-  getPersonalCurrentRound,
+  getPersonalCurrentRound, isRoundComplete,
 } from '../utils/statusCalc';
 
 export default function HomePage() {
@@ -137,7 +137,6 @@ export default function HomePage() {
   return (
     <div className="page-no-topbar">
 
-      {/* 프로필 미완성 팝업 */}
       {showProfileAlert && (
         <div style={{
           position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
@@ -176,7 +175,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── 홈 히어로 배너 (알림 아이콘 포함) ── */}
+      {/* 홈 히어로 배너 */}
       <div style={{
         background: 'linear-gradient(135deg, var(--color-raindrops-roses, #E8CDD0) 0%, var(--color-cloud-dancer, #F0EDE8) 55%, var(--color-ice-melt, #AECDE0) 100%)',
         padding: '16px 14px 18px',
@@ -222,7 +221,6 @@ export default function HomePage() {
 
       <div className="page-content fade-in">
 
-        {/* 초대 배너 */}
         {pendingInvites.length > 0 && (
           <div
             onClick={() => setShowNotification(true)}
@@ -286,7 +284,7 @@ export default function HomePage() {
               borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-default)',
               overflow: 'hidden', boxShadow: 'var(--shadow-card)',
             }}>
-              {/* ── D-day 헤더 (Pantone 2025) ── */}
+              {/* D-day 헤더 */}
               <div
                 onClick={() => navigate(`/gyodok/${g.id}`)}
                 style={{
@@ -318,7 +316,7 @@ export default function HomePage() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>내 상태</div>
                   <div style={{ fontSize: 11, color: 'var(--accent-primary)', fontWeight: 500 }}>
-                    {bks.length === 0 ? '책 등록 대기 중' : getMyStatusText(personalRound, myStatus)}
+                    {bks.length === 0 ? '책 등록 대기 중' : getMyStatusText(personalRound, myStatus, totalRounds)}
                   </div>
                 </div>
                 <MyBooksRow books={bks} currentRound={personalRound} userId={user.id} totalRounds={totalRounds} />
@@ -360,7 +358,7 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* 독서 현황 */}
+              {/* 독서 현황 — 탭 선택 방식 */}
               {(g.participantIds || []).length > 0 && (
                 <div style={{ padding: '14px 16px', borderTop: '0.5px solid var(--border-default)' }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>독서 현황</div>
@@ -382,7 +380,6 @@ export default function HomePage() {
           );
         })}
 
-        {/* 위시리스트 — 커버 가로 나열 */}
         <SectionHeader>내 다음 책 후보</SectionHeader>
         {wishlist.length === 0 ? (
           <div style={{
@@ -394,10 +391,7 @@ export default function HomePage() {
             <div style={{ fontSize: 11, color: 'var(--text-hint)' }}>서재에서 읽고 싶은 책을 추가해 보세요</div>
           </div>
         ) : (
-          <div style={{
-            display: 'flex', gap: 10, overflowX: 'auto',
-            paddingBottom: 4,
-          }}>
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
             {wishlist.slice(0, 5).map(item => (
               <WishCoverItem key={item.id} item={item} />
             ))}
@@ -437,40 +431,96 @@ function MyBooksRow({ books, currentRound, userId, totalRounds }) {
   );
 }
 
+// 독서 현황 — 탭 선택 방식
 function MemberRow({ userId, userName, books, allStatuses, isMe, isLast, totalRounds }) {
   const personalRound = getPersonalCurrentRound(userId, books, allStatuses, totalRounds);
-  const currentBook = books.find(b => b.round === personalRound && b.exchangeOrder?.includes(userId));
-  const status = currentBook ? allStatuses[currentBook.id]?.[userId] : null;
-  const { label, variant } = getMemberStatus(status);
+  const [selectedRound, setSelectedRound] = useState(personalRound);
+
+  // personalRound 바뀌면 selectedRound도 초기화
+  useEffect(() => {
+    setSelectedRound(personalRound);
+  }, [personalRound]);
+
+  const selectedBook = books.find(b => b.round === selectedRound && b.exchangeOrder?.includes(userId));
+  const selectedStatus = selectedBook ? allStatuses[selectedBook.id]?.[userId] : null;
+
+  const isFirst = selectedRound === 1;
+  const isLast2 = selectedRound === totalRounds;
+
+  // 선택 라운드별 체크포인트 목록
+  const checkpoints = isFirst
+    ? [
+        { key: 'isRead', label: '완독' },
+        { key: 'isSent', label: '발송함' },
+      ]
+    : isLast2
+    ? [
+        { key: 'isArrived', label: '받음' },
+        { key: 'isRead', label: '완독' },
+      ]
+    : [
+        { key: 'isArrived', label: '받음' },
+        { key: 'isRead', label: '완독' },
+        { key: 'isSent', label: '발송함' },
+      ];
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      paddingBottom: isLast ? 0 : 10, marginBottom: isLast ? 0 : 10,
+      paddingBottom: isLast ? 0 : 12, marginBottom: isLast ? 0 : 12,
       borderBottom: isLast ? 'none' : '0.5px solid var(--border-default)',
     }}>
-      <ProfileCircle name={userName || userId} isMe={isMe} size={26} />
-      <div style={{ display: 'flex', gap: 8 }}>
-        {Array.from({ length: totalRounds }, (_, i) => {
-          const round = i + 1;
-          const book  = books.find(b => b.round === round && b.exchangeOrder?.includes(userId));
-          const state = getBookCardState(round, personalRound);
-          return <BookCover key={round} coverUrl={book?.coverUrl} state={state} width={44} height={60} />;
-        })}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto', flexShrink: 0 }}>
-        <div style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: variant === 'green' ? 'var(--accent-green)' : 'var(--status-pending)',
-          border: variant !== 'green' ? '0.5px solid var(--border-strong)' : 'none',
-        }} />
-        <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <ProfileCircle name={userName || userId} isMe={isMe} size={26} />
+
+        {/* 책 탭 */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {Array.from({ length: totalRounds }, (_, i) => {
+            const round = i + 1;
+            const book  = books.find(b => b.round === round && b.exchangeOrder?.includes(userId));
+            const isSelected = round === selectedRound;
+            const state = getBookCardState(round, personalRound);
+            return (
+              <div
+                key={round}
+                onClick={() => setSelectedRound(round)}
+                style={{ cursor: 'pointer', position: 'relative' }}
+              >
+                <BookCover
+                  coverUrl={book?.coverUrl}
+                  state={isSelected ? 'current' : state}
+                  width={38}
+                  height={52}
+                />
+                {isSelected && (
+                  <div style={{
+                    position: 'absolute', bottom: -3, left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 4, height: 4, borderRadius: '50%',
+                    background: 'var(--accent-primary)',
+                  }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 선택된 라운드 상태 */}
+        <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end', flexShrink: 0 }}>
+          {checkpoints.map(cp => (
+            <div key={cp.key} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{cp.label}</span>
+              <div style={{
+                width: 6, height: 6, borderRadius: '50%',
+                background: selectedStatus?.[cp.key] ? 'var(--accent-primary)' : 'var(--border-strong)',
+              }} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-// 위시리스트 — 커버 카드만 표시
 function WishCoverItem({ item }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flexShrink: 0 }}>
