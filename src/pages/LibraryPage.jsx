@@ -237,7 +237,7 @@ export default function LibraryPage() {
 function BookItem({ book, onClick }) {
   return (
     <div onClick={onClick} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
-      <div style={{ width: '100%', height: 120, borderRadius: 6, border: '0.5px solid var(--border-input)', overflow: 'hidden', background: 'var(--bg-surface-secondary)', position: 'relative' }}>
+      <div style={{ width: '100%', height: 150, borderRadius: 6, border: '0.5px solid var(--border-input)', overflow: 'hidden', background: 'var(--bg-surface-secondary)', position: 'relative' }}>
         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 6, background: 'rgba(0,0,0,0.07)' }} />
         {book.coverUrl && <img src={book.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
         {book._wishId && (
