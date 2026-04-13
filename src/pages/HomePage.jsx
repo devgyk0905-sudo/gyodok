@@ -478,7 +478,6 @@ function MemberRow({ userId, userName, books, allStatuses, isMe, isLast, totalRo
             const round = i + 1;
             const book  = books.find(b => b.round === round && b.exchangeOrder?.includes(userId));
             const isSelected = round === selectedRound;
-            const state = getBookCardState(round, personalRound);
             return (
               <div
                 key={round}
@@ -487,7 +486,7 @@ function MemberRow({ userId, userName, books, allStatuses, isMe, isLast, totalRo
               >
                 <BookCover
                   coverUrl={book?.coverUrl}
-                  state={isSelected ? 'current' : state}
+                  state={round === selectedRound ? 'current' : 'pending'}
                   width={38}
                   height={52}
                 />
