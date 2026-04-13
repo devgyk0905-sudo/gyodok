@@ -393,7 +393,7 @@ export default function HomePage() {
         ) : (
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
             {wishlist
-            .filter((itetm, idx, arr) => arr.findIndex(w => w.isbn && w.isbn === item.isbn) === idx)
+            .filter((itetm, idx, arr) => arr.findIndex(x => x.isbn && x.isbn === w.isbn) === idx)
             .slice(0, 5)
             .map(item => (
               <WishCoverItem key={item.id} item={item} />
