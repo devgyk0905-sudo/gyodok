@@ -162,21 +162,7 @@ export default function LibraryPage() {
           <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 3 }}>내 서재</div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>읽은 책과 읽고 싶은 책을 모아보세요</div>
         </div>
-        <button
-          onClick={() => setShowSearch(true)}
-          style={{
-            padding: '6px 12px', borderRadius: 'var(--radius-full)',
-            background: 'rgba(255,255,255,0.7)', border: '0.5px solid rgba(255,255,255,0.9)',
-            fontSize: 12, color: 'var(--text-primary)', fontWeight: 500,
-            cursor: 'pointer', fontFamily: 'var(--font-sans)',
-            display: 'flex', alignItems: 'center', gap: 5, marginTop: 4,
-          }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v10M1 6h10" stroke="var(--text-primary)" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-          책 추가
-        </button>
+      
       </div>
 
       {/* 탭 */}
@@ -201,21 +187,22 @@ export default function LibraryPage() {
         {!loading && displayBooks.length === 0 && (
           <EmptyState message="책이 없습니다" sub="상단 책 추가 버튼으로 책을 추가해 보세요" />
         )}
-        {!loading && displayBooks.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 16 }}>
-            {displayBooks.map((book, i) => (
-              <BookItem key={book.isbn || book.id || i} book={book} onClick={() => setSelectedBook(book)} />
-            ))}
-            <div onClick={() => setShowSearch(true)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
-              <div style={{ width: '100%', height: 90, borderRadius: 6, border: '0.5px dashed var(--border-input)', background: 'var(--bg-surface-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M10 4v12M4 10h12" stroke="var(--border-strong)" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <span style={{ fontSize: 10, color: 'var(--text-hint)' }}>추가</span>
-            </div>
-          </div>
-        )}
+        {!loading && (
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 16 }}>
+    {/* 책 추가하기 버튼 — 항상 첫 번째 */}
+    <div onClick={() => setShowSearch(true)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+      <div style={{ width: '100%', height: 120, borderRadius: 6, border: '1.5px dashed var(--accent-primary)', background: 'var(--bg-surface-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 4v12M4 10h12" stroke="var(--accent-primary)" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      </div>
+      <span style={{ fontSize: 10, color: 'var(--accent-primary)', fontWeight: 500 }}>책 추가하기</span>
+    </div>
+    {displayBooks.map((book, i) => (
+      <BookItem key={book.isbn || book.id || i} book={book} onClick={() => setSelectedBook(book)} />
+    ))}
+  </div>
+)}
         <div style={{ fontSize: 11, color: 'var(--text-hint)', textAlign: 'center', padding: '8px 0 16px' }}>
           교독에 사용한 책은 자동으로 서재에 저장됩니다
         </div>
@@ -250,7 +237,7 @@ export default function LibraryPage() {
 function BookItem({ book, onClick }) {
   return (
     <div onClick={onClick} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
-      <div style={{ width: '100%', height: 90, borderRadius: 6, border: '0.5px solid var(--border-input)', overflow: 'hidden', background: 'var(--bg-surface-secondary)', position: 'relative' }}>
+      <div style={{ width: '100%', height: 120, borderRadius: 6, border: '0.5px solid var(--border-input)', overflow: 'hidden', background: 'var(--bg-surface-secondary)', position: 'relative' }}>
         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 6, background: 'rgba(0,0,0,0.07)' }} />
         {book.coverUrl && <img src={book.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
         {book._wishId && (
