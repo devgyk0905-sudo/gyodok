@@ -191,7 +191,7 @@ export default function LibraryPage() {
   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 16 }}>
     {/* 책 추가하기 버튼 — 항상 첫 번째 */}
     <div onClick={() => setShowSearch(true)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
-      <div style={{ width: '100%', height: 120, borderRadius: 6, border: '1.5px dashed var(--accent-primary)', background: 'var(--bg-surface-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+      <div style={{ width: '100%', height: 160, borderRadius: 6, border: '1.5px dashed var(--accent-primary)', background: 'var(--bg-surface-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path d="M10 4v12M4 10h12" stroke="var(--accent-primary)" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
@@ -237,7 +237,7 @@ export default function LibraryPage() {
 function BookItem({ book, onClick }) {
   return (
     <div onClick={onClick} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
-      <div style={{ width: '100%', height: 150, borderRadius: 6, border: '0.5px solid var(--border-input)', overflow: 'hidden', background: 'var(--bg-surface-secondary)', position: 'relative' }}>
+      <div style={{ width: '100%', height: 160, borderRadius: 6, border: '0.5px solid var(--border-input)', overflow: 'hidden', background: 'var(--bg-surface-secondary)', position: 'relative' }}>
         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 6, background: 'rgba(0,0,0,0.07)' }} />
         {book.coverUrl && <img src={book.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
         {book._wishId && (
@@ -433,7 +433,7 @@ function BookDetailSheet({ book, activeGyodoks, onClose, onWishToggle, onDelete,
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, height: 40, borderRadius: 'var(--radius-md)', border: '0.5px solid var(--border-input)', background: 'var(--bg-surface-secondary)', fontSize: 13, color: 'var(--text-tertiary)', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>취소</button>
-              <button onClick={() => { setShowDeleteConfirm(false); onDelete(); }} style={{ flex: 2, height: 40, borderRadius: 'var(--radius-md)', background: '#c87070', border: 'none', fontSize: 13, color: '#fff', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>삭제</button>
+              <button onClick={() => { setShowDeleteConfirm(false); onDelete(); }} style={{ flex: 2, height: 40, borderRadius: 'var(--radius-md)', background: '#c87070', border: 'none', fontSize: 13, color: '#fff', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>삭제하기</button>
             </div>
           </div>
         </div>

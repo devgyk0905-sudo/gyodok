@@ -380,7 +380,7 @@ export default function HomePage() {
           );
         })}
 
-        <SectionHeader>내 다음 책 후보</SectionHeader>
+        <SectionHeader>나의 위시리스트</SectionHeader>
         {wishlist.length === 0 ? (
           <div style={{
             background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
@@ -392,7 +392,10 @@ export default function HomePage() {
           </div>
         ) : (
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
-            {wishlist.slice(0, 5).map(item => (
+            {wishlist
+            .filter((itetm, idx, arr) => arr.findIndex(w => w.isbn && w.isbn === item.isbn) === idx)
+            .slice(0, 5)
+            .map(item => (
               <WishCoverItem key={item.id} item={item} />
             ))}
           </div>
