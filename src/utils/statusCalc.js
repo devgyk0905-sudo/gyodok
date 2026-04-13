@@ -1,26 +1,21 @@
+// 라운드 완료 여부 판단
+export function isRoundComplete(round, totalRounds, status) {
+  if (!status) return false;
+  const isFirst = round === 1;
+  const isLast = round === totalRounds;
+  if (isFirst) return !!(status.isRead && status.isSent);
+  if (isLast) return !!(status.isArrived && status.isRead);
+  return !!(status.isArrived && status.isRead && status.isSent);
+}
+
 // 개인별 현재 차수 계산
-// "도착했어요" 체크 = 해당 차수 완료 → 다음 차수 시작
 export function getPersonalCurrentRound(userId, books, allStatuses, totalRounds) {
   for (let round = 1; round <= totalRounds; round++) {
     const book = books.find(b => b.round === round && b.exchangeOrder?.includes(userId));
     if (!book) return round;
     const st = allStatuses?.[book.id]?.[userId];
-    const isFirstRound = round === 1;
-    const isLastRound = round === totalRounds;
-
-    if (isFirstRound) {
-      // 1차: 완독 + 발송 둘 다 있어야 완료
-      if (st?.isRead && st?.isSent) continue;
-      return round;
-    } else if (isLastRound) {
-      // 마지막: 도착 + 완독 둘 다 있어야 완료
-      if (st?.isArrived && st?.isRead) continue;
-      return round;
-    } else {
-      // 중간: 도착 + 완독 + 발송 모두 있어야 완료
-      if (st?.isArrived && st?.isRead && st?.isSent) continue;
-      return round;
-    }
+    if (isRoundComplete(round, totalRounds, st)) continue;
+    return round;
   }
   return totalRounds;
 }
@@ -39,10 +34,10 @@ export function calcGyodokStatus(participants, books, allStatuses, totalRounds =
   );
   const fastestRound = Math.max(...rounds);
 
-  // 모두 마지막 차수 완료 여부
   const allDone = participants.every(p => {
     const lastBook = books.find(b => b.round === totalRounds && b.exchangeOrder?.includes(p.id));
-    return lastBook && allStatuses?.[lastBook.id]?.[p.id]?.isRead;
+    const st = lastBook ? allStatuses?.[lastBook.id]?.[p.id] : null;
+    return isRoundComplete(totalRounds, totalRounds, st);
   });
   if (allDone) {
     return { round: totalRounds, label: `${totalRounds}/${totalRounds}`, statusText: '교독 완료!' };
@@ -75,22 +70,22 @@ export function getBookCardState(bookRound, currentRound) {
   return 'pending';
 }
 
-export function getMyStatusText(round, status) {
+export function getMyStatusText(round, status, totalRounds) {
   const ordinals = ['', '1권째', '2권째', '3권째'];
   const ord = ordinals[round] || `${round}권째`;
   if (!status) return `${ord} 읽는 중`;
-  if (status.isArrived) return `${ord} 교환 완료`;
-  if (status.isSent) return `${ord} 발송 완료`;
-  if (status.isRead) return `${ord} 완독 완료`;
+  if (status.isSent && round < totalRounds) return `${ord} 발송 완료`;
+  if (status.isRead) return `${ord} 완독`;
+  if (status.isArrived) return `${ord} 받음`;
   return `${ord} 읽는 중`;
 }
 
 export function getMemberStatus(status) {
   if (!status) return { label: '미시작', variant: 'gray' };
-  if (status.isArrived) return { label: '교환 완료', variant: 'green' };
   if (status.isSent) return { label: '발송함', variant: 'green' };
   if (status.isRead) return { label: '완독', variant: 'green' };
-  return { label: '미시작', variant: 'gray' };
+  if (status.isArrived) return { label: '받음', variant: 'green' };
+  return { label: '읽는 중', variant: 'gray' };
 }
 
 export function calcDday(targetDate) {
@@ -115,14 +110,4 @@ export function getNextCheckpoint(checkpoints) {
     .filter(cp => cp.date && new Date(cp.date) >= now)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   return upcoming[0] || checkpoints[checkpoints.length - 1];
-}
-
-// 라운드 완료 여부 판단
-export function isRoundComplete(round, totalRounds, status) {
-  if (!status) return false;
-  const isFirst = round === 1;
-  const isLast = round === totalRounds;
-  if (isFirst) return !!(status.isRead && status.isSent);
-  if (isLast) return !!(status.isArrived && status.isRead);
-  return !!(status.isArrived && status.isRead && status.isSent);
 }
